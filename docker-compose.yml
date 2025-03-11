@@ -1,0 +1,16 @@
+version: '3'
+services:
+  postgres:
+    image: postgres:13.4
+    environment:
+      - POSTGRES_USER=username
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=db_name
+    # persist the postgres data to disk so we don't lose it on rebuilds.
+    volumes:
+      - open_ethereum_indexer_postgres_data:/var/lib/postgresql/data
+    ports:
+      - '5439:5432'
+
+volumes:
+  open_ethereum_indexer_postgres_data:
