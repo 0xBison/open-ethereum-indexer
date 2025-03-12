@@ -13,7 +13,7 @@ import {
   makeGaugeProvider,
   makeHistogramProvider,
 } from '@willsoto/nestjs-prometheus';
-import client from 'prom-client';
+import * as client from 'prom-client';
 import { JsonStoreModule } from 'nest-json-store';
 import { dotenvLoader, TypedConfigModule } from 'nest-typed-config';
 import { CoreConfig } from './core.config';

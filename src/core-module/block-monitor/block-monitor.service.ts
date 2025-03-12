@@ -3,8 +3,8 @@ import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import {
   EthereumHttpClient,
   EthereumHttpClientProviderIdentifier,
-} from 'modules/ethereum-client-module/ethereum-http-client';
-import { BlockEvent } from '../../ethereum-client-module/types';
+} from 'ethereum-client-module/ethereum-http-client';
+import { BlockEvent } from 'ethereum-client-module/types';
 import {
   BlockProcessorService,
   BlockProcessorServiceIdentifier,
@@ -15,10 +15,7 @@ import { Histogram } from 'prom-client';
 import { CoreConfig } from '../core.config';
 import { getNextBlockRange } from '../utils/get-next-block-range';
 import { sleep } from '../utils/sleep';
-import {
-  ConfigService,
-  getTopicFiltersToSubscribe,
-} from 'modules/config-module';
+import { ConfigService, getTopicFiltersToSubscribe } from 'config-module';
 import { JsonStore, JsonStoreIdentifier } from 'nest-json-store';
 
 export const BlockMonitorServiceIdentifier = 'BlockMonitorService';

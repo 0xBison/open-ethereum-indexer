@@ -6,7 +6,7 @@ import { Formatter } from '@ethersproject/providers';
 import BigNumber from 'bignumber.js';
 import { Log } from '@ethersproject/abstract-provider';
 import { TopicList } from '../config-module/types';
-import { WILDCARD_ADDRESS } from '../config-module/config.service';
+import { WILDCARD_ADDRESS } from 'config-module/config.service';
 
 export interface FilterLogs {
   fromBlock: number;

@@ -6,7 +6,7 @@ import {
   onContractResponder,
   LogEvent,
 } from './types';
-import { ConfigService } from 'modules/config-module';
+import { ConfigService } from 'config-module';
 import { LogDescription } from 'ethers/lib/utils';
 
 export const EVENT_MANAGER_SERVICE = 'EVENT_MANAGER_SERVICE';

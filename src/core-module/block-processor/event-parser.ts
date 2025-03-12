@@ -2,7 +2,7 @@ import { Log } from '@ethersproject/abstract-provider';
 import { Interface, LogDescription } from 'ethers/lib/utils';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '../../config-module/config.service';
-import { EventInfo } from 'modules/config-module';
+import { EventInfo } from 'config-module';
 
 export const EventParserIdentifier = 'EventParser';
 

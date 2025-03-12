@@ -6,7 +6,7 @@ import {
   EventManagerService,
 } from '../event-manager/event-manager.service';
 import { LogEvent } from '../event-manager/types';
-import { BlockEvent } from 'modules/ethereum-client-module/types';
+import { BlockEvent } from 'ethereum-client-module/types';
 import { InjectMetric } from '@willsoto/nestjs-prometheus';
 import { Counter, Gauge, Histogram } from 'prom-client';
 
