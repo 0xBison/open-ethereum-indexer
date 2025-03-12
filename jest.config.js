@@ -17,4 +17,7 @@ module.exports = {
   coverageDirectory: '../coverage',
   testEnvironment: 'node',
   testMatch: ['<rootDir>/**/*.spec.ts'],
+  moduleNameMapper: {
+    '^modules/(.*)$': '<rootDir>/src/$1',
+  },
 };
