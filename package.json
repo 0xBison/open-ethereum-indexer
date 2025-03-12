@@ -24,9 +24,16 @@
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/typeorm": "^11.0.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
     "ethers": "^5.7.2",
+    "nest-json-store": "^0.0.4",
+    "nest-typed-config": "^2.9.4",
     "rxjs": "^7.8.1",
-    "typeorm": "^0.3.20"
+    "typeorm": "^0.3.20",
+    "typeorm-naming-strategies": "^4.1.0",
+    "pg": "^8.7.3"
+
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
