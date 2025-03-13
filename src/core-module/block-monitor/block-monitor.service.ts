@@ -17,11 +17,9 @@ import { getNextBlockRange } from '../utils/get-next-block-range';
 import { sleep } from '../utils/sleep';
 import { ConfigService, getTopicFiltersToSubscribe } from 'config-module';
 import { JsonStore, JsonStoreIdentifier } from 'nest-json-store';
+import { LATEST_BLOCK, LATEST_INDEXED_BLOCK } from './constants';
 
-export const BlockMonitorServiceIdentifier = 'BlockMonitorService';
-
-export const LATEST_BLOCK = 'LATEST_BLOCK';
-export const LATEST_INDEXED_BLOCK = 'LATEST_INDEXED_BLOCK';
+export const BlockMonitorServiceIdentifier = 'BlockMonitorServiceIdentifier';
 
 /**
  * BlockMonitor maintains a consistent representation of the latest X blocks (where X is enforced by the
@@ -155,16 +153,16 @@ export class BlockMonitorService implements OnModuleInit {
   public async getBlockProcessingDetails(): Promise<BlocksBehind> {
     const latestBlockProcessed = await this.getLatestIndexedBlock();
 
+    const latestBlock = await this.client.headerByNumber();
+
     // No previously stored block, so no blocks have elapsed
     if (!latestBlockProcessed) {
       return {
         blocksElapsed: -1,
         latestBlockProcessed: null,
-        latestBlock: null,
+        latestBlock,
       };
     }
-
-    const latestBlock = await this.client.headerByNumber();
 
     const latestBlockProcessedNumber = latestBlockProcessed.number;
     const blocksElapsed = latestBlock.number - latestBlockProcessedNumber;
@@ -191,12 +189,17 @@ export class BlockMonitorService implements OnModuleInit {
    * Syncs our local state of the chain to the latest block found via Ethereum RPC
    */
   private async syncToLatestBlock() {
-    const { blocksElapsed, latestBlockProcessed } =
+    const { blocksElapsed, latestBlockProcessed, latestBlock } =
       await this.getBlockProcessingDetails();
 
     // No block ever processed so start the block monitor from the start block
     if (!latestBlockProcessed) {
-      const startBlock = this.configService.getStartBlock();
+      let startBlock = this.configService.getStartBlock();
+
+      if (!startBlock) {
+        startBlock = latestBlock?.number ?? 0;
+      }
+
       await this.setStartBlock(startBlock);
       return;
     }

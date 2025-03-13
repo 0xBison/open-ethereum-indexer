@@ -26,6 +26,12 @@ import {
   EventManagerService,
 } from './event-manager/event-manager.service';
 import { BlockMonitorController } from './block-monitor/block-monitor.controller';
+import {
+  SQLTransactionService,
+  SQLTransactionServiceIdentifier,
+  TransactionalBlockProcessor,
+  TransactionalBlockProcessorIdentifier,
+} from 'core-module';
 
 // Metrics configuration
 const metrics = [
@@ -74,6 +80,14 @@ const metrics = [
   ],
   providers: [
     {
+      provide: SQLTransactionServiceIdentifier,
+      useClass: SQLTransactionService,
+    },
+    {
+      provide: TransactionalBlockProcessorIdentifier,
+      useClass: TransactionalBlockProcessor,
+    },
+    {
       provide: BlockMonitorServiceIdentifier,
       useClass: BlockMonitorService,
     },
@@ -92,11 +106,12 @@ const metrics = [
     Logger,
     ...metrics,
   ],
-  controllers: [BlockMonitorController],
+  controllers: [],
   exports: [
     EVENT_MANAGER_SERVICE,
     EventParserIdentifier,
     BlockProcessorServiceIdentifier,
+    BlockMonitorServiceIdentifier,
   ],
 })
 export class CoreModule {}

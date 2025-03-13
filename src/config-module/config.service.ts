@@ -193,7 +193,17 @@ export class ConfigService {
     return this.eventTopicList;
   }
 
-  getStartBlock(): number {
+  /**
+   * Get the start block for the contracts.
+   * If no contracts are being monitored, returns null.
+   *
+   * @returns The start block for the contracts
+   */
+  getStartBlock(): number | null {
+    if (Object.keys(this.config.contracts).length < 1) {
+      return null;
+    }
+
     return Object.values(this.config.contracts).reduce((min, contract) => {
       return Math.min(min, contract.startBlock ?? 0);
     }, Number.MAX_SAFE_INTEGER);

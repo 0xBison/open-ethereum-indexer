@@ -1,14 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EntityManager, EntityTarget, ObjectLiteral } from 'typeorm';
-import { UndoOperation } from './blockchain-reorg.service';
+import { UndoOperation } from './types';
+
+export const SQLTransactionServiceIdentifier =
+  'SQLTransactionServiceIdentifier';
 
 /**
  * Developer-friendly service for safely storing, editing, and deleting entities
- * with blockchain reorganization protection
+ * with undo protection
  */
 @Injectable()
-export class BlockchainTransactionService {
-  private readonly logger = new Logger(BlockchainTransactionService.name);
+export class SQLTransactionService {
+  private readonly logger = new Logger(SQLTransactionService.name);
 
   private entityManager: EntityManager;
 

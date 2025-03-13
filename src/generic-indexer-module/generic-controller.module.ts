@@ -22,9 +22,6 @@ export class GenericControllerModule {
       const fullName = entity.name;
       const baseName = fullName.split('_')[0];
 
-      console.log('baseName', baseName);
-      console.log('fullName', entity);
-
       return createGenericEntityController(entity, baseName);
     });
 

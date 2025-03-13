@@ -1,33 +1,28 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
-import { BlockchainTransactionService } from './blockchain-transaction.service';
+import {
+  SQLTransactionService,
+  SQLTransactionServiceIdentifier,
+} from '../sql-transaction/sql-transaction.service';
+import { UndoOperation } from '../sql-transaction/types';
+import { InjectEntityManager } from '@nestjs/typeorm';
 
-// Interface for undo operations
-export interface UndoOperation {
-  type: 'INSERT' | 'UPDATE' | 'DELETE';
-  entity: string;
-  data: any;
-  condition?: any;
-  originalData?: any;
-}
-
-// Interface for block indexing result
-export interface BlockIndexResult {
-  blockNumber: number;
-  success: boolean;
-  undoOperations: UndoOperation[];
-}
+export const TransactionalBlockProcessorIdentifier =
+  'TransactionalBlockProcessorIdentifier';
 
 /**
- * Service for handling blockchain reorganizations
+ * Service for handling all block processing database queries as a single database transaction.
+ * Will either fail or succeed as a whole. Supports both processing and reverting (re-org scenarios).
  */
 @Injectable()
-export class BlockchainReorgService {
-  private readonly logger = new Logger(BlockchainReorgService.name);
+export class TransactionalBlockProcessor {
+  private readonly logger = new Logger(TransactionalBlockProcessor.name);
 
   constructor(
+    @InjectEntityManager()
     private entityManager: EntityManager,
-    private transactionService: BlockchainTransactionService,
+    @Inject(SQLTransactionServiceIdentifier)
+    private transactionService: SQLTransactionService,
   ) {}
 
   /**
@@ -36,6 +31,17 @@ export class BlockchainReorgService {
    */
   async processBlock(blockNumber: number, callback: () => Promise<void>) {
     this.logger.log(`Starting to process block ${blockNumber}`);
+
+    // Check if block already exists
+    const existingBlock = await this.entityManager
+      .getRepository('BlockIndex')
+      .findOne({ where: { blockNumber } });
+
+    if (existingBlock) {
+      throw new Error(
+        `Block ${blockNumber} already exists and cannot be processed again`,
+      );
+    }
 
     // Use the transaction method of EntityManager
     await this.entityManager.transaction(async (transactionalEntityManager) => {
@@ -52,11 +58,11 @@ export class BlockchainReorgService {
 
       this.transactionService.resetUndoOperations();
 
-      // Store the block result in the same transaction
-      await this.storeBlockResult({
+      // Store the block processing result and undo operations in the database
+      await this.entityManager.getRepository('BlockIndex').save({
         blockNumber,
-        success: true,
-        undoOperations: undoOps,
+        processedAt: new Date(),
+        undoOperations: JSON.stringify(undoOps),
       });
 
       this.logger.log(`All operations processed for block ${blockNumber}`);
@@ -125,42 +131,15 @@ export class BlockchainReorgService {
         }
       }
 
-      // Remove the block result in the same transaction
-      await this.removeBlockResult(blockNumber);
+      // Remove the block processing result and undo operations from the database
+      await this.entityManager
+        .getRepository('BlockIndex')
+        .delete({ blockNumber });
+
       this.logger.log(`All undo operations applied for block ${blockNumber}`);
     });
 
     this.logger.log(`Successfully reverted block ${blockNumber}`);
-  }
-
-  /**
-   * Remove block processing results including undo operations
-   */
-  async removeBlockResult(blockNumber: number) {
-    this.logger.log(`Removing block result for block ${blockNumber}`);
-
-    // Remove the block processing result and undo operations from the database
-    await this.entityManager
-      .getRepository('BlockIndex')
-      .delete({ blockNumber });
-
-    this.logger.log(`Removed block result for block ${blockNumber}`);
-  }
-
-  /**
-   * Store block processing results including undo operations
-   */
-  async storeBlockResult(result: BlockIndexResult) {
-    this.logger.log(`Storing block result for block ${result.blockNumber}`);
-
-    // Store the block processing result and undo operations in the database
-    await this.entityManager.getRepository('BlockIndex').save({
-      blockNumber: result.blockNumber,
-      processedAt: new Date(),
-      undoOperations: JSON.stringify(result.undoOperations),
-    });
-
-    this.logger.log(`Stored block result for block ${result.blockNumber}`);
   }
 
   /**

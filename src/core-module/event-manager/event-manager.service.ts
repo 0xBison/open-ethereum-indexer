@@ -103,7 +103,6 @@ export class EventManagerService {
    * @param payload - Data to be passed to the handlers
    */
   async emitEventIndex(payload: LogEvent): Promise<void> {
-    console.log('this.eventHandlers', this.eventHandlers.length);
     const { contractName, eventName } = this.getContractAndEventName(
       payload.log.address,
       payload.parsedEvent,
@@ -117,10 +116,8 @@ export class EventManagerService {
         matchesEventPattern(contractName, eventName, handler.pattern) &&
         handler.handlers.onIndex
       ) {
-        console.log("there's a match here");
         await handler.handlers.onIndex(payload);
       } else {
-        console.log('no match here');
       }
     }
   }

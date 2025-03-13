@@ -13,17 +13,17 @@ import {
 } from 'core-module/event-manager/event-manager.service';
 import { GenericControllerModule } from 'generic-indexer-module/generic-controller.module';
 
-onEvent('*:*', {
-  onIndex: async (payload) => {
-    console.log('ON EVENT');
-  },
-});
+// onEvent('*:*', {
+//   onIndex: async (payload) => {
+//     console.log('ON EVENT');
+//   },
+// });
 
-onBlock({
-  onIndex: async (payload) => {
-    console.log('ON BLOCK');
-  },
-});
+// onBlock({
+//   onIndex: async (payload) => {
+//     console.log('ON BLOCK');
+//   },
+// });
 
 const config = {
   network: {

@@ -9,6 +9,12 @@ import { LogEvent } from '../event-manager/types';
 import { BlockEvent } from 'ethereum-client-module/types';
 import { InjectMetric } from '@willsoto/nestjs-prometheus';
 import { Counter, Gauge, Histogram } from 'prom-client';
+import {
+  LATEST_INDEXED_BLOCK,
+  TransactionalBlockProcessor,
+  TransactionalBlockProcessorIdentifier,
+} from 'core-module';
+import { JsonStoreIdentifier, JsonStore } from 'nest-json-store';
 
 export const BlockProcessorServiceIdentifier = 'BlockProcessorService';
 
@@ -29,6 +35,9 @@ export class BlockProcessorService {
     @InjectMetric('block_process_iteration_duration')
     public blockProcessIterationDuration: Histogram<string>,
     @InjectMetric('indexed_blocks') public indexedBlockCounter: Counter<string>,
+    @Inject(TransactionalBlockProcessorIdentifier)
+    private transactionalBlockProcessor: TransactionalBlockProcessor,
+    @Inject(JsonStoreIdentifier) private cacheDatabase: JsonStore,
   ) {}
 
   /**
@@ -44,39 +53,53 @@ export class BlockProcessorService {
   ): Promise<void> {
     // iterate over the event logs included in the new block events, and process them
     for (const blockEvent of blockEventsToProcess) {
-      // set the start timestamp for this block process iteration
-      const startBlockEventToProcessTimestamp = Date.now();
-
-      if (!areRemoved) {
-        this.eventManager.emitBlockIndex('hello');
-      } else {
-        this.eventManager.emitBlockDeindex('hello');
-      }
-
-      // when reorg (areRemoved = true) we reverse the logs which is important to undo
-      // copy the logs when reversing to ensure they arent mutated and stored in reverse order...
-      const logsToProcess = areRemoved
-        ? [...blockEvent.logs].reverse()
-        : blockEvent.logs;
-      this.logCountPerBlock.observe(logsToProcess.length);
-
-      await this.processLogs(logsToProcess, blockEvent.timestamp, areRemoved);
-
-      // Increment for new indexed blocks
-      if (!areRemoved) {
-        this.indexedBlockCounter.inc();
-      }
-
-      this.blockNumberGauge.set(blockEvent.number);
-      this.latestBlockTimeGauge.set(blockEvent.timestamp);
-      // get the end timestamp of the block process iteration
-      const endBlockEventToProcessTimestamp = Date.now();
-      // get the block process iteration duration from the 2 timestamps
-      const blockProcessIterationDuration =
-        endBlockEventToProcessTimestamp - startBlockEventToProcessTimestamp;
-
-      this.blockProcessIterationDuration.observe(blockProcessIterationDuration);
+      // process the block as a transaction so the whole thing either succeeds or fails
+      await this.transactionalBlockProcessor.processBlock(
+        blockEvent.number,
+        () => this.processBlock(blockEvent, areRemoved),
+      );
     }
+  }
+
+  private async processBlock(
+    blockEvent: BlockEvent,
+    areRemoved = false,
+  ): Promise<void> {
+    // set the start timestamp for this block process iteration
+    const startBlockEventToProcessTimestamp = Date.now();
+
+    if (!areRemoved) {
+      this.eventManager.emitBlockIndex('hello');
+    } else {
+      this.eventManager.emitBlockDeindex('hello');
+    }
+
+    // when reorg (areRemoved = true) we reverse the logs which is important to undo
+    // copy the logs when reversing to ensure they arent mutated and stored in reverse order...
+    const logsToProcess = areRemoved
+      ? [...blockEvent.logs].reverse()
+      : blockEvent.logs;
+
+    this.logCountPerBlock.observe(logsToProcess.length);
+
+    await this.processLogs(logsToProcess, blockEvent.timestamp, areRemoved);
+
+    // Increment for new indexed blocks
+    if (!areRemoved) {
+      this.indexedBlockCounter.inc();
+    }
+
+    this.blockNumberGauge.set(blockEvent.number);
+    this.latestBlockTimeGauge.set(blockEvent.timestamp);
+    // get the end timestamp of the block process iteration
+    const endBlockEventToProcessTimestamp = Date.now();
+    // get the block process iteration duration from the 2 timestamps
+    const blockProcessIterationDuration =
+      endBlockEventToProcessTimestamp - startBlockEventToProcessTimestamp;
+
+    this.blockProcessIterationDuration.observe(blockProcessIterationDuration);
+
+    this.cacheDatabase.set(LATEST_INDEXED_BLOCK, blockEvent);
   }
 
   public async processLogs(
