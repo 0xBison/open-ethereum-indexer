@@ -55,6 +55,8 @@ export class BlockMonitorService implements OnModuleInit {
    * It's run once when the app starts only.
    */
   private async sync(): Promise<void> {
+    console.log(process.env.MAX_BLOCKS_PER_QUERY);
+
     if (this.status !== SyncStatus.AWAITING_INITIALIZATION) {
       throw new Error('Watch has already been called');
     }
@@ -62,6 +64,8 @@ export class BlockMonitorService implements OnModuleInit {
     this.status = SyncStatus.RUNNING;
 
     while (true) {
+      console.log('syncing');
+
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - This is flagging an incorrect issue since we are checking the status which can be changed via endpoint
       if (this.status === SyncStatus.STOPPING) {
@@ -116,7 +120,7 @@ export class BlockMonitorService implements OnModuleInit {
   public async setStartBlock(startBlock: number): Promise<void> {
     if (this.status !== SyncStatus.RUNNING) {
       throw new Error(
-        `Can't set start block as current stage is not running. Status is: ${this.status}`,
+        `Can't set start block as current stage is not running. Status is: ${SyncStatus[this.status.toString()]}`,
       );
     }
 
@@ -358,20 +362,20 @@ export class BlockMonitorService implements OnModuleInit {
     return this.config;
   }
 
-  public async setLatestBlock(block: BlockEvent) {
+  private async setLatestBlock(block: BlockEvent) {
     this.cacheDatabase.set(LATEST_BLOCK, block);
   }
 
-  public async setLatestIndexedBlock(block: BlockEvent) {
+  private async setLatestIndexedBlock(block: BlockEvent) {
     this.cacheDatabase.set(LATEST_INDEXED_BLOCK, block);
   }
 
-  public async getLatestBlock(): Promise<BlockEvent | null> {
+  private async getLatestBlock(): Promise<BlockEvent | null> {
     const latestBlock = await this.cacheDatabase.get<BlockEvent>(LATEST_BLOCK);
     return latestBlock ?? null;
   }
 
-  public async getLatestIndexedBlock(): Promise<BlockEvent | null> {
+  private async getLatestIndexedBlock(): Promise<BlockEvent | null> {
     const latestIndexedBlock =
       await this.cacheDatabase.get<BlockEvent>(LATEST_INDEXED_BLOCK);
     return latestIndexedBlock ?? null;

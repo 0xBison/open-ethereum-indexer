@@ -73,7 +73,10 @@ const metrics = [
   imports: [
     TypedConfigModule.forRoot({
       schema: CoreConfig,
-      load: dotenvLoader(),
+      load: dotenvLoader({
+        envFilePath:
+          process.env.NODE_ENV === 'test' ? ['.env.test', '.env'] : '.env',
+      }),
     }),
     EthereumClientModule,
     JsonStoreModule,

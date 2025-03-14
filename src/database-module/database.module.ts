@@ -25,7 +25,12 @@ export class DatabaseModule {
           imports: [
             TypedConfigModule.forRoot({
               schema: DatabaseConfig,
-              load: dotenvLoader(),
+              load: dotenvLoader({
+                envFilePath:
+                  process.env.NODE_ENV === 'test'
+                    ? ['.env.test', '.env']
+                    : '.env',
+              }),
             }),
           ],
           inject: [DatabaseConfig],

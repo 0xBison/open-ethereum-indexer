@@ -1,9 +1,9 @@
 import { expect } from 'chai';
 import { ethers } from 'ethers';
 import { getEventData } from './getEventData';
-import SomeContract from './SomeContract.json';
+import { SomeContractArtifact } from 'solidity-event-test-suite';
 
-const contractInterface = new ethers.utils.Interface(SomeContract);
+const contractInterface = new ethers.utils.Interface(SomeContractArtifact.abi);
 
 describe('getEventData tests', () => {
   // Helper function to adjust the expected output for arrays based on the current implementation
