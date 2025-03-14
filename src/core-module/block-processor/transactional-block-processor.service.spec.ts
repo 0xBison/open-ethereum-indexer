@@ -1,7 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TransactionalBlockProcessor } from './transactional-block-processor.service';
-import { SQLTransactionService } from '../sql-transaction/sql-transaction.service';
+import {
+  SQLTransactionService,
+  SQLTransactionServiceIdentifier,
+} from '../sql-transaction/sql-transaction.service';
 import { EntityManager } from 'typeorm';
 import { Logger } from '@nestjs/common';
 import {
@@ -31,7 +34,10 @@ describe('TransactionalBlockProcessor', () => {
         TypeOrmModule.forFeature([A, B, C, BlockIndex]),
       ],
       providers: [
-        SQLTransactionService,
+        {
+          provide: SQLTransactionServiceIdentifier,
+          useClass: SQLTransactionService,
+        },
         TransactionalBlockProcessor,
         {
           provide: Logger,
@@ -44,7 +50,7 @@ describe('TransactionalBlockProcessor', () => {
       TransactionalBlockProcessor,
     );
     transactionService = moduleRef.get<SQLTransactionService>(
-      SQLTransactionService,
+      SQLTransactionServiceIdentifier,
     );
     entityManager = moduleRef.get<EntityManager>(EntityManager);
   });

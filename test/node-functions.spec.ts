@@ -208,42 +208,71 @@ describe('Blockchain Node Functions', () => {
   });
 
   test('should handle JSON-RPC error responses', async () => {
-    // Setup mock error response
-    mockFetchResponse({
-      jsonrpc: '2.0',
-      id: 1,
-      error: {
-        code: -32601,
-        message: 'Method not found',
-      },
-    });
+    // Temporarily silence console.error
+    const originalConsoleError = console.error;
+    console.error = jest.fn();
 
-    // Try to call a function and expect it to throw
-    await expect(mineNewBlock(TEST_RPC_URL)).rejects.toThrow(
-      'JSON-RPC error: Method not found (code: -32601)',
-    );
+    try {
+      // Setup mock error response
+      mockFetchResponse({
+        jsonrpc: '2.0',
+        id: 1,
+        error: {
+          code: -32601,
+          message: 'Method not found',
+        },
+      });
+
+      // Try to call a function and expect it to throw
+      await expect(mineNewBlock(TEST_RPC_URL)).rejects.toThrow(
+        'JSON-RPC error: Method not found (code: -32601)',
+      );
+    } finally {
+      // Restore console.error
+      console.error = originalConsoleError;
+    }
   });
 
   test('should handle HTTP errors', async () => {
-    // Setup mock HTTP error
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: false,
-      status: 404,
-    });
+    // Temporarily silence console.error
+    const originalConsoleError = console.error;
+    console.error = jest.fn();
 
-    // Try to call a function and expect it to throw
-    await expect(mineNewBlock(TEST_RPC_URL)).rejects.toThrow(
-      'HTTP error! Status: 404',
-    );
+    try {
+      // Setup mock HTTP error
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+      });
+
+      // Try to call a function and expect it to throw
+      await expect(mineNewBlock(TEST_RPC_URL)).rejects.toThrow(
+        'HTTP error! Status: 404',
+      );
+    } finally {
+      // Restore console.error
+      console.error = originalConsoleError;
+    }
   });
 
   test('should handle network errors', async () => {
-    // Setup mock network error
-    (global.fetch as jest.Mock).mockRejectedValueOnce(
-      new Error('Network failure'),
-    );
+    // Temporarily silence console.error
+    const originalConsoleError = console.error;
+    console.error = jest.fn();
 
-    // Try to call a function and expect it to throw
-    await expect(mineNewBlock(TEST_RPC_URL)).rejects.toThrow('Network failure');
+    try {
+      // Setup mock network error
+      (global.fetch as jest.Mock).mockRejectedValueOnce(
+        new Error('Network failure'),
+      );
+
+      // Try to call a function and expect it to throw
+      await expect(mineNewBlock(TEST_RPC_URL)).rejects.toThrow(
+        'Network failure',
+      );
+    } finally {
+      // Restore console.error
+      console.error = originalConsoleError;
+    }
   });
 });
