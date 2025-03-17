@@ -33,8 +33,10 @@ export const initializeSchema = async (
   databaseConfig: DatabaseConfig,
   additionalEntities: Type<any>[] = [],
 ) => {
+  const dbParams = typeOrmModuleOptions(databaseConfig, additionalEntities);
+
   const dataSource = new DataSource({
-    ...typeOrmModuleOptions(databaseConfig, additionalEntities), // Pass all parameters
+    ...dbParams, // Pass all parameters
     schema: 'public',
     synchronize: false,
     migrationsRun: false,

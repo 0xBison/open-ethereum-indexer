@@ -1,6 +1,6 @@
 import { BeforeInsert, Column, CreateDateColumn, PrimaryColumn } from 'typeorm';
 import * as crypto from 'crypto';
-import * as constants from './constants';
+import * as constants from '../constants';
 
 /**
  * An abstract blockchain event entity which every event that is indexed inherits from.

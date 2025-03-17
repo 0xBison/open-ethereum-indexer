@@ -17,4 +17,5 @@ export enum SyncStatus {
   RUNNING = 'RUNNING', // Loop is running fine, safe to stop.
   STOPPING = 'STOPPING', // When stop has been initialized but still in progress. not safe to start here.
   STOPPED = 'STOPPED', // Is stopped. or never started. safe to start from here.
+  TERMINATED = 'TERMINATED', // Loop has been terminated.
 }

@@ -1,8 +1,11 @@
 import { Module } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { INestApplication } from '@nestjs/common';
-import { ConfigModule } from 'config-module';
-import { DatabaseModule } from 'database-module/database.module';
+import { Config, ConfigModule } from 'config-module';
+import {
+  DatabaseModule,
+  DatabaseModuleOptions,
+} from 'database-module/database.module';
 import { CoreModule } from 'core-module/core.module';
 import { EthereumClientModule } from 'ethereum-client-module/ethereum-client.module';
 import { GenericIndexerModule } from 'generic-indexer-module/generic-indexer.module';
@@ -11,6 +14,11 @@ import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 import { Logger } from '@nestjs/common';
+import {
+  onEvent,
+  onBlock,
+} from 'core-module/event-manager/event-manager.service';
+import { DatabaseConfig } from 'database-module/database.config';
 
 // Load test environment variables
 export function loadTestEnvironment() {
@@ -25,24 +33,43 @@ export function loadTestEnvironment() {
   }
 }
 
+export interface IndexerTestSetupConfig {
+  config: Config;
+  databaseConfig?: DatabaseModuleOptions;
+}
+
 // Create a test module similar to AppModule but configurable
-export function createTestModule(nodeConfig: any) {
+export function createTestModule(indexerConfig: IndexerTestSetupConfig) {
+  let { rpcUrl, chainId } = indexerConfig.config.network;
+
+  console.log(`Indexer started with RPC URL: ${rpcUrl}, Chain ID: ${chainId}`);
+
   @Module({
     imports: [
-      ConfigModule.register(nodeConfig),
-      DatabaseModule.forRoot({
-        entities: [],
-        migrations: [],
-      }),
+      ConfigModule.register(indexerConfig.config),
+      DatabaseModule.forRoot(indexerConfig.databaseConfig),
       CoreModule,
       EthereumClientModule,
-      PrometheusModule.register(),
+      // Skip prometheus or it causes issues with the metrics being registered multiple times
+      // PrometheusModule.register(),
       GenericIndexerModule.forRoot(),
       GenericControllerModule.forEntities(),
     ],
     exports: [CoreModule],
   })
   class TestAppModule {}
+
+  // onEvent('*:*', {
+  //   onIndex: async (payload) => {
+  //     console.log('ON EVENTTTT', JSON.stringify(payload, null, 2));
+  //   },
+  // });
+
+  // onBlock({
+  //   onIndex: async (payload) => {
+  //     console.log('ON BLOCKKKKK', JSON.stringify(payload, null, 2));
+  //   },
+  // });
 
   return TestAppModule;
 }
@@ -52,25 +79,13 @@ export class IndexerTestSetup {
   private logger: Logger | null = null;
 
   async setupIndexer(
-    rpcUrl: string,
-    chainId: number = 1337,
+    indexerConfig: IndexerTestSetupConfig,
   ): Promise<INestApplication> {
     // Create a custom console logger for tests
     const testLogger = new Logger('TestIndexer');
 
-    // Create indexer configuration
-    const config = {
-      network: {
-        rpcUrl,
-        chainId,
-      },
-      contracts: {},
-    };
-
-    console.log('env', process.env.LOG_LEVEL);
-
     // Create and start the test app with the custom logger
-    const TestAppModule = createTestModule(config);
+    const TestAppModule = createTestModule(indexerConfig);
     this.app = await NestFactory.create(TestAppModule, {
       abortOnError: true,
       // Use the native logger instead of Pino
@@ -78,10 +93,6 @@ export class IndexerTestSetup {
     });
 
     await this.app.init();
-
-    testLogger.log(
-      `Indexer started with RPC URL: ${rpcUrl}, Chain ID: ${chainId}`,
-    );
 
     return this.app;
   }

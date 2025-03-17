@@ -1,0 +1,289 @@
+[
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint64[]",
+        "name": "dynamicArray",
+        "type": "uint64[]"
+      }
+    ],
+    "name": "EventWithDynamicArray",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint64[3]",
+        "name": "uint64Array",
+        "type": "uint64[3]"
+      }
+    ],
+    "name": "EventWithFixedArray",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint64[3]",
+            "name": "uint64Array",
+            "type": "uint64[3]"
+          },
+          {
+            "internalType": "uint64[]",
+            "name": "dynamicArray",
+            "type": "uint64[]"
+          }
+        ],
+        "indexed": false,
+        "internalType": "struct SomeContract.StructWithArrays",
+        "name": "theStruct",
+        "type": "tuple"
+      }
+    ],
+    "name": "EventWithStructWithArrays",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "a",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "b",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct SomeContract.SimpleStruct[]",
+            "name": "dynamicStructArray",
+            "type": "tuple[]"
+          }
+        ],
+        "indexed": false,
+        "internalType": "struct SomeContract.StructWithDynamicStructArray",
+        "name": "theStruct",
+        "type": "tuple"
+      }
+    ],
+    "name": "EventWithStructWithDynamicStructArray",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "a",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "b",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct SomeContract.SimpleStruct[2]",
+            "name": "structArray",
+            "type": "tuple[2]"
+          }
+        ],
+        "indexed": false,
+        "internalType": "struct SomeContract.StructWithFixedStructArray",
+        "name": "theStruct",
+        "type": "tuple"
+      }
+    ],
+    "name": "EventWithStructWithFixedStructArray",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "a",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "b",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct SomeContract.SimpleStruct",
+            "name": "simpleStruct",
+            "type": "tuple"
+          }
+        ],
+        "indexed": false,
+        "internalType": "struct SomeContract.StructWithNestedStruct",
+        "name": "theStruct",
+        "type": "tuple"
+      }
+    ],
+    "name": "EventWithStructWithNestedStruct",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint64",
+        "name": "num64Value",
+        "type": "uint64"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "boolValue",
+        "type": "bool"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "stringValue",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "addrValue",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes1",
+        "name": "bytes1Value",
+        "type": "bytes1"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "bytes32Value",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "int256",
+        "name": "int256Value",
+        "type": "int256"
+      },
+      {
+        "indexed": false,
+        "internalType": "int64",
+        "name": "int64Value",
+        "type": "int64"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum SomeContract.SomeEnum",
+        "name": "someEnum",
+        "type": "uint8"
+      }
+    ],
+    "name": "SimpleEvent",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint64[]",
+        "name": "dynamicUintArray",
+        "type": "uint64[]"
+      }
+    ],
+    "name": "emitEventWithDynamicArray",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "emitEventWithFixedArray",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint64[]",
+        "name": "dynamicUintArray",
+        "type": "uint64[]"
+      }
+    ],
+    "name": "emitEventWithStructWithArrays",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "a",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "b",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct SomeContract.SimpleStruct[]",
+        "name": "fixedStructArray",
+        "type": "tuple[]"
+      }
+    ],
+    "name": "emitEventWithStructWithDynamicStructArray",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "emitEventWithStructWithFixedStructArray",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "emitEventWithStructWithNestedStruct",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "emitSimpleEvent",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]

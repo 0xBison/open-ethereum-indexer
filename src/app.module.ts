@@ -6,6 +6,7 @@ import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 import { CoreModule } from 'core-module/core.module';
 import { ConfigModule } from 'config-module';
 import { GenericIndexerModule } from 'generic-indexer-module/generic-indexer.module';
+import { LoggerModule } from 'logger-module/logger.module';
 
 import {
   onEvent,
@@ -36,6 +37,7 @@ const config = {
 @Global()
 @Module({
   imports: [
+    LoggerModule,
     ConfigModule.register(config),
     DatabaseModule.forRoot({
       entities: [],

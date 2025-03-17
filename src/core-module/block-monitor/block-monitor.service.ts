@@ -1,5 +1,11 @@
 import { Log } from '@ethersproject/abstract-provider';
-import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  Logger,
+  OnApplicationShutdown,
+  OnModuleInit,
+} from '@nestjs/common';
 import {
   EthereumHttpClient,
   EthereumHttpClientProviderIdentifier,
@@ -27,7 +33,9 @@ export const BlockMonitorServiceIdentifier = 'BlockMonitorServiceIdentifier';
  * any arbitrary block height, and will emit both block added and removed events.
  */
 @Injectable()
-export class BlockMonitorService implements OnModuleInit {
+export class BlockMonitorService
+  implements OnModuleInit, OnApplicationShutdown
+{
   private readonly logger = new Logger(BlockMonitorService.name);
 
   private status: SyncStatus;
@@ -47,7 +55,15 @@ export class BlockMonitorService implements OnModuleInit {
   }
 
   onModuleInit() {
-    this.sync();
+    const syncComplete = this.sync();
+    syncComplete.then(() => {
+      console.log('sync complete');
+    });
+  }
+
+  onApplicationShutdown() {
+    console.log('onApplicationShutdown');
+    this.status = SyncStatus.TERMINATED;
   }
 
   /**
@@ -63,8 +79,10 @@ export class BlockMonitorService implements OnModuleInit {
 
     this.status = SyncStatus.RUNNING;
 
-    while (true) {
-      console.log('syncing');
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore - This is flagging an incorrect issue since its triggered by the onApplicationShutdown hook
+    while (this.status !== SyncStatus.TERMINATED) {
+      // console.log('syncing');
 
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - This is flagging an incorrect issue since we are checking the status which can be changed via endpoint
@@ -72,6 +90,8 @@ export class BlockMonitorService implements OnModuleInit {
         this.status = SyncStatus.STOPPED;
       }
 
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore - This is flagging an incorrect issue
       if (this.status === SyncStatus.RUNNING) {
         try {
           await this.syncToLatestBlock();
@@ -84,6 +104,11 @@ export class BlockMonitorService implements OnModuleInit {
 
       await sleep(this.config.SLEEP_INTERVAL);
     }
+
+    console.log('after while');
+
+    this.logger.log('BlockMonitorService shutdown');
+    return;
   }
 
   /**
@@ -128,6 +153,9 @@ export class BlockMonitorService implements OnModuleInit {
 
     const latestIndexedBlock = await this.getLatestIndexedBlock();
 
+    // console.log('latestIndexedBlock', latestIndexedBlock);
+    // console.log('startBlock', startBlock);
+
     if (latestIndexedBlock) {
       this.status = SyncStatus.RUNNING;
       throw new Error('Blockmonitor has already indexed blocks');
@@ -137,6 +165,8 @@ export class BlockMonitorService implements OnModuleInit {
       fromBlock: startBlock,
       toBlock: startBlock,
     };
+
+    // console.log('setStartBlock blockRange', blockRange);
 
     const blockEvents = await this.getBlockEventsForBlockRange(blockRange);
 
@@ -193,18 +223,29 @@ export class BlockMonitorService implements OnModuleInit {
    * Syncs our local state of the chain to the latest block found via Ethereum RPC
    */
   private async syncToLatestBlock() {
+    // console.log('before call');
+
     const { blocksElapsed, latestBlockProcessed, latestBlock } =
       await this.getBlockProcessingDetails();
+
+    // console.log('after call');
 
     // No block ever processed so start the block monitor from the start block
     if (!latestBlockProcessed) {
       let startBlock = this.configService.getStartBlock();
 
-      if (!startBlock) {
+      // console.log('startBlock', startBlock);
+
+      if (startBlock === null) {
         startBlock = latestBlock?.number ?? 0;
       }
 
+      // console.log('setting start block', startBlock);
+
       await this.setStartBlock(startBlock);
+
+      // console.log('after set start block');
+
       return;
     }
 
@@ -214,7 +255,7 @@ export class BlockMonitorService implements OnModuleInit {
 
     try {
       let currentBlockNumber = latestBlockProcessed.number + 1;
-      const endBlockNum = currentBlockNumber + blocksElapsed;
+      const endBlockNum = currentBlockNumber + blocksElapsed - 1;
 
       while (currentBlockNumber < endBlockNum) {
         const latestIndexedBlock = await this.getLatestIndexedBlock();
@@ -234,7 +275,11 @@ export class BlockMonitorService implements OnModuleInit {
           this.config.MAX_BLOCKS_PER_QUERY,
         );
 
+        // console.log('blockRange', blockRange);
+
         await this.processBlockEventsInBlockRange(blockRange);
+
+        // console.log('after process block events in block range');
 
         currentBlockNumber = blockRange.toBlock + 1;
 
@@ -261,7 +306,9 @@ export class BlockMonitorService implements OnModuleInit {
     const blockEvents = await this.getBlockEventsForBlockRange(blockRange);
 
     try {
+      console.log('before process block events');
       await this.blockProcessorService.processBlockEvents(blockEvents);
+      console.log('after process block events');
     } catch (err) {
       this.logger.error(`Error processing events: ${err.stack}`);
     }
@@ -363,11 +410,15 @@ export class BlockMonitorService implements OnModuleInit {
   }
 
   private async setLatestBlock(block: BlockEvent) {
+    console.log('setting latest block', block);
     this.cacheDatabase.set(LATEST_BLOCK, block);
+    console.log('latest block set', block);
   }
 
   private async setLatestIndexedBlock(block: BlockEvent) {
+    console.log('setting latest indexed block', block);
     this.cacheDatabase.set(LATEST_INDEXED_BLOCK, block);
+    console.log('latest indexed block set', block);
   }
 
   private async getLatestBlock(): Promise<BlockEvent | null> {
