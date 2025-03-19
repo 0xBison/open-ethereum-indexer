@@ -9,11 +9,11 @@ import { LogEvent } from '../event-manager/types';
 import { BlockEvent } from 'ethereum-client-module/types';
 import { InjectMetric } from '@willsoto/nestjs-prometheus';
 import { Counter, Gauge, Histogram } from 'prom-client';
+import { LATEST_INDEXED_BLOCK } from '../block-monitor/constants';
 import {
-  LATEST_INDEXED_BLOCK,
   TransactionalBlockProcessor,
   TransactionalBlockProcessorIdentifier,
-} from 'core-module';
+} from './transactional-block-processor.service';
 import { JsonStoreIdentifier, JsonStore } from 'nest-json-store';
 
 export const BlockProcessorServiceIdentifier = 'BlockProcessorService';

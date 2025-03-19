@@ -14,11 +14,6 @@ import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 import { Logger } from '@nestjs/common';
-import {
-  onEvent,
-  onBlock,
-} from 'core-module/event-manager/event-manager.service';
-import { DatabaseConfig } from 'database-module/database.config';
 
 // Load test environment variables
 export function loadTestEnvironment() {
@@ -50,7 +45,8 @@ export function createTestModule(indexerConfig: IndexerTestSetupConfig) {
       DatabaseModule.forRoot(indexerConfig.databaseConfig),
       CoreModule,
       EthereumClientModule,
-      // Skip prometheus or it causes issues with the metrics being registered multiple times
+      // Skip prometheus or it causes issues with the metrics being registered multiple times:
+      // A metric with the name xxx has already been registered.
       // PrometheusModule.register(),
       GenericIndexerModule.forRoot(),
       GenericControllerModule.forEntities(),
@@ -58,18 +54,6 @@ export function createTestModule(indexerConfig: IndexerTestSetupConfig) {
     exports: [CoreModule],
   })
   class TestAppModule {}
-
-  // onEvent('*:*', {
-  //   onIndex: async (payload) => {
-  //     console.log('ON EVENTTTT', JSON.stringify(payload, null, 2));
-  //   },
-  // });
-
-  // onBlock({
-  //   onIndex: async (payload) => {
-  //     console.log('ON BLOCKKKKK', JSON.stringify(payload, null, 2));
-  //   },
-  // });
 
   return TestAppModule;
 }
@@ -86,6 +70,13 @@ export class IndexerTestSetup {
 
     // Create and start the test app with the custom logger
     const TestAppModule = createTestModule(indexerConfig);
+
+    console.log(
+      'Available modules to load:',
+      Object.keys(TestAppModule.prototype).join(', '),
+    );
+    console.log('CoreModule providers:', CoreModule);
+
     this.app = await NestFactory.create(TestAppModule, {
       abortOnError: true,
       // Use the native logger instead of Pino

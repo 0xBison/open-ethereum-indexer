@@ -22,7 +22,7 @@ Open Ethereum Indexer is designed to simplify the process of indexing and queryi
 
 ## Prerequisites
 
-- Node.js (v16+)
+- Node.js (v20+)
 - PostgreSQL
 - Access to an Ethereum node (via RPC URL)
 

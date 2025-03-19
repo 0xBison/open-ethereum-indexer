@@ -1,5 +1,3 @@
-// src/core-module/block-monitor/block-monitor.service.spec.ts
-
 import { Test, TestingModule } from '@nestjs/testing';
 import { BlockMonitorService } from './block-monitor.service';
 import {

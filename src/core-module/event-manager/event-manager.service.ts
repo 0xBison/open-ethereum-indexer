@@ -108,9 +108,6 @@ export class EventManagerService {
       payload.parsedEvent,
     );
 
-    // console.log('contractName', contractName);
-    // console.log('eventName', eventName);
-
     for (const handler of this.eventHandlers) {
       if (
         matchesEventPattern(contractName, eventName, handler.pattern) &&
@@ -131,9 +128,6 @@ export class EventManagerService {
       payload.log.address,
       payload.parsedEvent,
     );
-
-    // console.log('contractName', contractName);
-    // console.log('eventName', eventName);
 
     for (const handler of this.eventHandlers) {
       if (

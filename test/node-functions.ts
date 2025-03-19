@@ -228,3 +228,41 @@ export async function getBlockNumber(rpcUrl: string): Promise<string> {
 
   return makeRpcCall<string>(rpcUrl, blockNumberRequest);
 }
+
+/**
+ * Transaction to include in a chain reorganization
+ */
+type ReorgTransaction = {
+  from: string;
+  to: string;
+  data: string;
+  gasLimit: string;
+  value?: string;
+};
+
+/**
+ * Transaction with block position for reorg
+ */
+type ReorgTransactionWithBlock = [ReorgTransaction, number];
+
+/**
+ * Performs a chain reorganization using Anvil's anvil_reorg method
+ * @param rpcUrl The URL of the blockchain node
+ * @param reorgDepth Number of blocks to reorg from the head
+ * @param transactions Array of transactions with their target block positions
+ * @returns Promise with the result of the reorg operation
+ */
+export async function performChainReorg(
+  rpcUrl: string,
+  reorgDepth: number,
+  transactions: ReorgTransactionWithBlock[],
+): Promise<any> {
+  const reorgRequest: JsonRpcRequest = {
+    jsonrpc: '2.0',
+    id: 1,
+    method: 'anvil_reorg',
+    params: [reorgDepth, transactions],
+  };
+
+  return makeRpcCall<any>(rpcUrl, reorgRequest);
+}

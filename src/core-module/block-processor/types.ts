@@ -1,4 +1,4 @@
-import { UndoOperation } from 'core-module/sql-transaction';
+import { UndoOperation } from '../sql-transaction';
 
 // Interface for block indexing result
 export interface BlockIndexResult {

@@ -29,9 +29,11 @@ import { BlockMonitorController } from './block-monitor/block-monitor.controller
 import {
   SQLTransactionService,
   SQLTransactionServiceIdentifier,
+} from './sql-transaction';
+import {
   TransactionalBlockProcessor,
   TransactionalBlockProcessorIdentifier,
-} from 'core-module';
+} from './block-processor';
 
 // Metrics configuration
 const metrics = [

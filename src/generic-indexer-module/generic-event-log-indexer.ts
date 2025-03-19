@@ -47,6 +47,7 @@ export class GenericEventLogIndexer implements OnModuleInit {
     eventEntity['blockHash'] = log.blockHash;
     eventEntity['transactionHash'] = log.transactionHash;
     eventEntity['topics'] = log.topics;
+    eventEntity['blockNumber'] = log.blockNumber;
     eventEntity['blockTimestamp'] = new Date(
       blockTimestamp * 1000,
     ).toISOString();
