@@ -1,16 +1,7 @@
 import { ethers } from 'ethers';
-import fs from 'fs';
-import path from 'path';
-import {
-  afterAll,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-} from '@jest/globals';
+import { describe, expect, it } from '@jest/globals';
 import { getNodeSetup, NodeSetup } from './utils/node-setup';
-import { sleep, EVENT_MANAGER_SERVICE } from 'core-module';
+import { sleep, BlockMonitorServiceIdentifier } from 'core-module';
 import { performChainReorg } from './node-functions';
 import { INestApplication } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
@@ -18,7 +9,6 @@ import {
   IndexerTestSetup,
   IndexerTestSetupConfig,
 } from './utils/indexer-setup';
-import { EventManagerService } from 'core-module';
 import {
   CounterIncrementedEntity_75bd9fe0,
   CounterDecrementedEntity_f4b3f987,
@@ -83,7 +73,7 @@ describe('Ethereum Chain Reorg Tests', () => {
   let dataSource: DataSource;
   let entityManager: EntityManager;
 
-  const setup = async () => {
+  const setupNode = async () => {
     // Use local Anvil node
     nodeSetup = getNodeSetup(USE_CONTAINERIZED_NODE);
     rpcUrl = await nodeSetup.setup();
@@ -98,10 +88,10 @@ describe('Ethereum Chain Reorg Tests', () => {
 
     // Create wallet using the first account's private key
     wallet = new ethers.Wallet(
-      // Default private key for first Anvil account
       '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
       provider,
     );
+
     // Deploy the Counter contract
     console.log('\n--- Deploying Counter Contract ---');
     const counterFactory = new ethers.ContractFactory(
@@ -115,39 +105,8 @@ describe('Ethereum Chain Reorg Tests', () => {
     console.log(`Counter contract deployed at ${counterContract.address}`);
   };
 
-  beforeEach(setup, 60000);
-
-  afterEach(async () => {
-    await nodeSetup.teardown();
-  });
-
-  it('should detect chain reorganization through log changes and update the indexed database', async () => {
-    // Mine some blocks with counter events
-    console.log('\n--- Mining Blocks with Counter Events ---');
-    for (let i = 0; i < 5; i++) {
-      // Call increment() which emits an event
-      const tx = await counterContract.increment({
-        gasLimit: 50000,
-        gasPrice: ethers.utils.parseUnits('1', 'gwei'),
-      });
-      // Wait for transaction to be mined
-      await tx.wait();
-    }
-    // Get pre-reorg state
-    console.log('\n--- Pre-Reorg State ---');
-    const preReorgChainState = await getChainState(
-      provider,
-      counterContract.address,
-    );
-    console.log(JSON.stringify(preReorgChainState, null, 2));
-    const preReorgCounterValue = await getCounterValue(counterContract);
-    console.log(
-      `Pre-reorg block number: ${preReorgChainState.currentBlockNumber}`,
-    );
-    console.log(`Pre-reorg block hash: ${preReorgChainState.currentBlockHash}`);
-    console.log(`Pre-reorg logs count: ${preReorgChainState.logs.length}`);
-    console.log(`Pre-reorg counter value: ${preReorgCounterValue}`);
-    // Set up the indexer after initial blocks but before reorg
+  const setupIndexer = async () => {
+    // Set up the indexer config
     console.log('\n--- Setting up Indexer ---');
     const indexerConfig: IndexerTestSetupConfig = {
       config: {
@@ -170,42 +129,133 @@ describe('Ethereum Chain Reorg Tests', () => {
         migrations: [CounterMigrations1742198536891],
       },
     };
-    // Set up the indexer
+
+    // Create a new indexer test setup (includes PostgreSQL container)
     indexerSetup = new IndexerTestSetup();
-    app = await indexerSetup.setupIndexer(indexerConfig);
+
+    // Set up the indexer with optional customizations
+    app = await indexerSetup.setupIndexer(indexerConfig, (moduleBuilder) => {
+      // Example of how to customize the module before compilation
+      // This is optional - only use if you need to override additional providers
+      return moduleBuilder;
+    });
+
     // Get DataSource and EntityManager instances
     dataSource = app.get(DataSource);
     entityManager = dataSource.manager;
+  };
+
+  const cleanUp = async () => {
+    try {
+      if (app) {
+        const blockMonitorService = app.get(BlockMonitorServiceIdentifier);
+        await blockMonitorService.stop();
+      }
+
+      if (dataSource && dataSource.isInitialized) {
+        try {
+          const schemaName = process.env.SQL_SCHEMA || 'public';
+          await dataSource.query(
+            `DROP SCHEMA IF EXISTS "${schemaName}" CASCADE`,
+          );
+          await dataSource.destroy();
+        } catch (dbError) {
+          console.error('Error cleaning database:', dbError);
+        }
+      }
+
+      if (indexerSetup) {
+        await indexerSetup.teardownIndexer();
+      }
+
+      if (nodeSetup) {
+        await nodeSetup.teardown();
+      }
+    } catch (error) {
+      console.error('Error in test cleanup:', error);
+    }
+  };
+
+  it('should detect chain reorganization through log changes and update the indexed database', async () => {
+    await setupNode();
+
+    // Mine some blocks with counter events
+    console.log('\n--- Mining Blocks with Counter Events ---');
+    for (let i = 0; i < 5; i++) {
+      // Call increment() which emits an event
+      const tx = await counterContract.increment({
+        gasLimit: 50000,
+        gasPrice: ethers.utils.parseUnits('1', 'gwei'),
+      });
+      // Wait for transaction to be mined
+      await tx.wait();
+    }
+
+    // Get pre-reorg state
+    console.log('\n--- Pre-Reorg State ---');
+
+    const preReorgChainState = await getChainState(
+      provider,
+      counterContract.address,
+    );
+
+    console.log(JSON.stringify(preReorgChainState, null, 2));
+
+    const preReorgCounterValue = await getCounterValue(counterContract);
+
+    console.log(
+      `Pre-reorg block number: ${preReorgChainState.currentBlockNumber}`,
+    );
+    console.log(`Pre-reorg block hash: ${preReorgChainState.currentBlockHash}`);
+    console.log(`Pre-reorg logs count: ${preReorgChainState.logs.length}`);
+    console.log(`Pre-reorg counter value: ${preReorgCounterValue}`);
+
+    // Set up the indexer after initial blocks but before reorg
+    console.log('\n--- Setting up Indexer ---');
+
+    await setupIndexer();
+
     // Give indexer time to catch up with the chain
-    await sleep(3000);
+    await sleep(5000);
+
     // Check indexed data before reorg
     const preReorgIncrementedEvents = await entityManager.find(
       CounterIncrementedEntity_75bd9fe0,
     );
+
     // Check indexed data before reorg
     const preReorgDecrementedEvents = await entityManager.find(
       CounterDecrementedEntity_f4b3f987,
     );
+
     console.log('\n--- Pre-Reorg Indexed Events ---');
     console.log(`Total indexed events: ${preReorgIncrementedEvents.length}`);
+
     expect(preReorgIncrementedEvents.length).toEqual(5); // 5 increment events
     expect(preReorgDecrementedEvents.length).toEqual(0); // 0 decrement events
+
     // Get the highest indexed block number
     const maxPreReorgBlockNumber = Math.max(
       ...preReorgIncrementedEvents.map((e) => e.blockNumber),
     );
+
     console.log(`Highest indexed block number: ${maxPreReorgBlockNumber}`);
+
     // --- Perform reorg using anvil_reorg ---
     console.log('\n--- Performing Chain Reorg ---');
+
     // Calculate reorg depth (reorg the last 2 blocks)
     const reorgDepth = 2;
+
     // Make sure we have enough blocks to reorg
     expect(preReorgChainState.currentBlockNumber).toBeGreaterThanOrEqual(
       reorgDepth,
     );
+
     // Prepare transactions for the new fork - use decrement() instead of increment()
     const decrementData =
       counterContract.interface.encodeFunctionData('decrement');
+
     // Perform the reorg
     try {
       const result = await performChainReorg(rpcUrl, reorgDepth, [
@@ -245,16 +295,22 @@ describe('Ethereum Chain Reorg Tests', () => {
       console.error('Error performing reorg:', error);
       throw error;
     }
+
     // Give the chain and indexer time to stabilize
     await sleep(5000);
+
     // Get post-reorg state
     console.log('\n--- Post-Reorg State ---');
+
     const postReorgChainState = await getChainState(
       provider,
       counterContract.address,
     );
+
     console.log(JSON.stringify(postReorgChainState, null, 2));
+
     const postReorgCounterValue = await getCounterValue(counterContract);
+
     console.log(
       `Post-reorg block number: ${postReorgChainState.currentBlockNumber}`,
     );
@@ -263,25 +319,30 @@ describe('Ethereum Chain Reorg Tests', () => {
     );
     console.log(`Post-reorg logs count: ${postReorgChainState.logs.length}`);
     console.log(`Post-reorg counter value: ${postReorgCounterValue}`);
+
     const postReorgIncrementedEvents = await entityManager.find(
       CounterIncrementedEntity_75bd9fe0,
       {
         order: { blockNumber: 'ASC' },
       },
     );
+
     const postReorgDecrementedEvents = await entityManager.find(
       CounterDecrementedEntity_f4b3f987,
       {
         order: { blockNumber: 'ASC' },
       },
     );
+
     console.log('\n--- Post-Reorg Indexed Events ---');
     console.log(`Total indexed events: ${postReorgIncrementedEvents.length}`);
     console.log(`Increment events: ${postReorgIncrementedEvents.length}`);
     console.log(`Decrement events: ${postReorgDecrementedEvents.length}`);
+
     // Verify that we have both increment and decrement events
     expect(postReorgIncrementedEvents.length).toEqual(3);
     expect(postReorgDecrementedEvents.length).toEqual(3); // Three decrement events from the reorg
+
     // Get the reorged block numbers
     const reorgedBlockNumbers = postReorgChainState.blocks
       .filter((postBlock, index) => {
@@ -291,24 +352,33 @@ describe('Ethereum Chain Reorg Tests', () => {
         return preBlock && preBlock.hash !== postBlock.hash;
       })
       .map((block) => block.number);
+
     console.log(`Reorged block numbers: ${reorgedBlockNumbers.join(', ')}`);
+
     // Verify that the events from reorged blocks have been properly replaced
     const eventsInReorgedBlocks = postReorgIncrementedEvents.filter((event) =>
       reorgedBlockNumbers.includes(event.blockNumber),
     );
+
     console.log(`Events in reorged blocks: ${eventsInReorgedBlocks.length}`);
     console.log(eventsInReorgedBlocks);
+
     // Clean up the indexer
-    const blockMonitorService = app.get('BlockMonitorService');
+    const blockMonitorService = app.get(BlockMonitorServiceIdentifier);
     await blockMonitorService.stop();
+
     // Get the schema name
     const schemaName = process.env.SQL_SCHEMA || 'public';
+
     // Drop the schema
     await dataSource.query(`DROP SCHEMA IF EXISTS "${schemaName}" CASCADE`);
+
     // Destroy the data source
     await dataSource.destroy();
+
     // Tear down the indexer
     await indexerSetup.teardownIndexer();
+
     // --- Rest of the existing assertions ---
     // 1. The reorg should change at least one block hash
     const reorgedBlocks = postReorgChainState.blocks.filter(
@@ -319,16 +389,23 @@ describe('Ethereum Chain Reorg Tests', () => {
         return preBlock && preBlock.hash !== postBlock.hash;
       },
     );
+
     expect(reorgedBlocks.length).toBeGreaterThan(0);
+
     console.log(`Detected ${reorgedBlocks.length} changed blocks`);
+
     // 2. Counter value should have changed (5 increments - 3 decrements = 2)
     expect(postReorgCounterValue).not.toEqual(preReorgCounterValue);
+
     // Adjust this expectation based on your actual observations
     // The current test shows 3 as the result
     expect(postReorgCounterValue).toEqual(0);
+
     // 3. Log count should be different after reorg
     expect(postReorgChainState.logs.length).not.toEqual(
       preReorgChainState.logs.length,
     );
+
+    await cleanUp();
   }, 120000); // Increase timeout for this test
 });
