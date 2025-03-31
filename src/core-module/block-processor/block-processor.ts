@@ -6,7 +6,7 @@ import {
   EventManagerService,
 } from '../event-manager/event-manager.service';
 import { LogEvent } from '../event-manager/types';
-import { BlockEvent } from 'ethereum-client-module/types';
+import { BlockEvent } from '../../types';
 import { InjectMetric } from '@willsoto/nestjs-prometheus';
 import { Counter, Gauge, Histogram } from 'prom-client';
 import { LATEST_INDEXED_BLOCK } from '../block-monitor/constants';
@@ -68,12 +68,6 @@ export class BlockProcessorService {
     // set the start timestamp for this block process iteration
     const startBlockEventToProcessTimestamp = Date.now();
 
-    if (!areRemoved) {
-      this.eventManager.emitBlockIndex('hello');
-    } else {
-      this.eventManager.emitBlockDeindex('hello');
-    }
-
     // when reorg (areRemoved = true) we reverse the logs which is important to undo
     // copy the logs when reversing to ensure they arent mutated and stored in reverse order...
     const logsToProcess = areRemoved
@@ -100,6 +94,12 @@ export class BlockProcessorService {
     this.blockProcessIterationDuration.observe(blockProcessIterationDuration);
 
     this.cacheDatabase.set(LATEST_INDEXED_BLOCK, blockEvent);
+
+    if (!areRemoved) {
+      this.eventManager.emitBlockIndex(blockEvent);
+    } else {
+      this.eventManager.emitBlockDeindex(blockEvent);
+    }
   }
 
   public async processLogs(
@@ -113,12 +113,6 @@ export class BlockProcessorService {
       blockTimestamp,
       areRemoved,
     };
-
-    if (areRemoved) {
-      await this.eventManager.emitBlockDeindex(blockPayload);
-    } else {
-      await this.eventManager.emitBlockIndex(blockPayload);
-    }
 
     // Then process individual logs
     for (const log of logs) {

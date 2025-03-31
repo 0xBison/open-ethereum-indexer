@@ -7,7 +7,7 @@ import {
 import { BlocksBehind, SyncStatus } from '../types';
 import { CoreConfig } from '../core.config';
 
-@ApiTags('blockmonitor')
+@ApiTags('Indexer Administration')
 @Controller()
 export class BlockMonitorController {
   constructor(

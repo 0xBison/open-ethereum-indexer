@@ -67,7 +67,6 @@ export abstract class BlockchainEventEntity {
   @Column({
     name: 'log_data',
     type: 'varchar',
-    select: false,
   })
   public logData: string;
 
@@ -98,7 +97,7 @@ export abstract class BlockchainEventEntity {
   })
   public transactionHash: string;
 
-  @Column({ name: 'topics', type: 'varchar', array: true, select: false })
+  @Column({ name: 'topics', type: 'varchar', array: true })
   public topics: Array<string>;
 
   static generateEventId(

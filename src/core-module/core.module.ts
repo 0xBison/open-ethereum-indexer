@@ -111,7 +111,7 @@ const metrics = [
     Logger,
     ...metrics,
   ],
-  controllers: [],
+  controllers: [BlockMonitorController],
   exports: [
     EVENT_MANAGER_SERVICE,
     EventParserIdentifier,

@@ -1,7 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
-import { BlockEvent } from './types';
+import { BlockEvent } from '../types';
 import { Formatter } from '@ethersproject/providers';
 import BigNumber from 'bignumber.js';
 import { Log } from '@ethersproject/abstract-provider';

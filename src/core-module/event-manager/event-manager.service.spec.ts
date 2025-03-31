@@ -66,7 +66,13 @@ describe('EventManagerService', () => {
         },
       });
 
-      await service.emitBlockIndex({});
+      await service.emitBlockIndex({
+        hash: '',
+        number: 0,
+        parent: '',
+        timestamp: 0,
+        logs: [],
+      });
       expect(results).toEqual([1, 2]);
     });
 
@@ -85,7 +91,13 @@ describe('EventManagerService', () => {
         },
       });
 
-      await service.emitBlockDeindex({});
+      await service.emitBlockDeindex({
+        hash: '',
+        number: 0,
+        parent: '',
+        timestamp: 0,
+        logs: [],
+      });
       expect(results).toEqual([1, 2]);
     });
 
@@ -113,8 +125,20 @@ describe('EventManagerService', () => {
         },
       });
 
-      await service.emitBlockIndex({});
-      await service.emitBlockDeindex({});
+      await service.emitBlockIndex({
+        hash: '',
+        number: 0,
+        parent: '',
+        timestamp: 0,
+        logs: [],
+      });
+      await service.emitBlockDeindex({
+        hash: '',
+        number: 0,
+        parent: '',
+        timestamp: 0,
+        logs: [],
+      });
 
       expect(results).toEqual(['index1', 'index2', 'deindex1', 'deindex3']);
     });

@@ -10,7 +10,6 @@ import {
   EthereumHttpClient,
   EthereumHttpClientProviderIdentifier,
 } from 'ethereum-client-module/ethereum-http-client';
-import { BlockEvent } from 'ethereum-client-module/types';
 import {
   BlockProcessorService,
   BlockProcessorServiceIdentifier,
@@ -24,6 +23,7 @@ import { sleep } from '../utils/sleep';
 import { ConfigService, getTopicFiltersToSubscribe } from 'config-module';
 import { JsonStore, JsonStoreIdentifier } from 'nest-json-store';
 import { LATEST_BLOCK, LATEST_INDEXED_BLOCK } from './constants';
+import { BlockEvent } from '../../types';
 
 export const BlockMonitorServiceIdentifier = 'BlockMonitorServiceIdentifier';
 

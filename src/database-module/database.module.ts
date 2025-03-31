@@ -7,6 +7,7 @@ import { dotenvLoader, TypedConfigModule } from 'nest-typed-config';
 import { Type } from '@nestjs/common';
 import { BlockIndex } from './core/BlockIndex.entity';
 import { CoreMigration1741835491000 } from './core/1741835491000-CoreMigration';
+import { entityRegistry } from '../generic-indexer-module/entity-registry';
 
 export interface DatabaseModuleOptions {
   entities?: Type<any>[];
@@ -17,6 +18,7 @@ export interface DatabaseModuleOptions {
 export class DatabaseModule {
   static forRoot(options: DatabaseModuleOptions = {}): DynamicModule {
     const { entities = [], migrations = [] } = options;
+    const registeredEntities = entityRegistry.getAll();
 
     return {
       module: DatabaseModule,
@@ -35,7 +37,11 @@ export class DatabaseModule {
           ],
           inject: [DatabaseConfig],
           useFactory: async (config: DatabaseConfig) => {
-            const allEntities = [BlockIndex, ...entities];
+            const allEntities = [
+              BlockIndex,
+              ...entities,
+              ...registeredEntities,
+            ];
             const allMigrations = [CoreMigration1741835491000, ...migrations];
 
             await initializeSchema(config, allEntities);

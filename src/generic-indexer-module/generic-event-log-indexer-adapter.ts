@@ -46,22 +46,23 @@ export class GenericEventLogIndexerAdapter implements OnModuleInit {
     // Re-register with the actual implementation
     this.eventManager.onBlock({
       onIndex: async (payload) => {
-        const { logs, blockTimestamp } = payload;
-        this.genericEventLogIndexer.processBlockLog(
-          logs,
-          blockTimestamp,
-          false,
-        );
+        const { logs, timestamp } = payload;
+        this.genericEventLogIndexer.processBlockLog(logs, timestamp, false);
       },
       onDeindex: async (payload) => {
-        const { logs, blockTimestamp } = payload;
-        this.genericEventLogIndexer.processBlockLog(logs, blockTimestamp, true);
+        const { logs, timestamp } = payload;
+        this.genericEventLogIndexer.processBlockLog(logs, timestamp, true);
       },
     });
 
     this.eventManager.onEvent('*:*', {
       onIndex: async (payload: LogEvent) => {
         console.log('ON EVENT sdfsdsd');
+        console.log('log', JSON.stringify(payload.log, null, 2));
+        console.log(
+          'parsedEvent',
+          JSON.stringify(payload.parsedEvent, null, 2),
+        );
         const { log, parsedEvent } = payload;
         await this.genericEventLogIndexer.processLog(
           log,

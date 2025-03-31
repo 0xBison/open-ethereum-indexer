@@ -8,6 +8,7 @@ import {
 } from './types';
 import { ConfigService } from 'config-module';
 import { LogDescription } from 'ethers/lib/utils';
+import { BlockEvent } from '../../types';
 
 export const EVENT_MANAGER_SERVICE = 'EVENT_MANAGER_SERVICE';
 
@@ -27,7 +28,6 @@ export function onEvent(pattern: string, handler: onContractResponder): void {
 @Injectable()
 export class EventManagerService {
   private blockHandlers: onBlockResponder[] = [];
-
   private eventHandlers: EventHandler[] = [];
 
   constructor(private configService: ConfigService) {
@@ -78,7 +78,7 @@ export class EventManagerService {
    * Emits a block index event to all registered block handlers.
    * @param payload - Data to be passed to the handlers
    */
-  async emitBlockIndex(payload: any): Promise<void> {
+  async emitBlockIndex(payload: BlockEvent): Promise<void> {
     for (const handler of this.blockHandlers) {
       if (handler.onIndex) {
         await handler.onIndex(payload);
@@ -90,7 +90,7 @@ export class EventManagerService {
    * Emits a block deindex event to all registered block handlers.
    * @param payload - Data to be passed to the handlers
    */
-  async emitBlockDeindex(payload: any): Promise<void> {
+  async emitBlockDeindex(payload: BlockEvent): Promise<void> {
     for (const handler of this.blockHandlers) {
       if (handler.onDeindex) {
         await handler.onDeindex(payload);

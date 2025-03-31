@@ -1,4 +1,4 @@
-import { BlockEvent } from 'ethereum-client-module/types';
+import { BlockEvent } from '../types';
 
 export interface BlockRange {
   fromBlock: number;
