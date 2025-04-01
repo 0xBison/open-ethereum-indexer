@@ -36,7 +36,7 @@ export class IndexerModule {
         EthereumClientModule,
         GenericIndexerModule.forRoot(),
         GenericControllerModule.forEntities(),
-        GraphQLAppModule.forRoot(),
+        // GraphQLAppModule.forRoot(),
         ...(indexerConfig.app?.disableMetrics
           ? []
           : [PrometheusModule.register()]),

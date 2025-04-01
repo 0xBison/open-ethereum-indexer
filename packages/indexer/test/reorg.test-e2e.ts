@@ -14,7 +14,7 @@ import {
   CounterDecrementedEntity_f4b3f987,
 } from './counter/entities';
 import { CounterMigrations1742198536891 } from './counter/migrations/1742198536891-CounterMigrations';
-import CounterArtifact from '../solidity/artifacts/contracts/Counter.sol/Counter.json';
+import CounterArtifact from '../../../solidity/artifacts/contracts/Counter.sol/Counter.json';
 
 // Helper functions to get blockchain state
 async function getChainState(

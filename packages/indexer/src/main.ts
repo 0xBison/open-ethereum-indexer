@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { Logger } from 'nestjs-pino';
-import { IndexerModule } from 'indexer-module/indexer.module';
-import { indexerConfig } from 'indexer.config';
+import { IndexerModule } from './indexer-module/indexer.module';
+import { indexerConfig } from './indexer.config';
 import './subscriptions';
 import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 import { setupSwagger } from './utils/swagger';
