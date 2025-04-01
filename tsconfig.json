@@ -19,6 +19,5 @@
     "types": ["node", "jest"],
     "lib": ["ES2021"]
   },
-  "exclude": ["node_modules", "dist"],
-  "references": [{ "path": "./packages/indexer" }]
+  "exclude": ["node_modules", "dist"]
 }

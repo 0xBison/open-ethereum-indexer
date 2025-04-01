@@ -4,6 +4,8 @@
   "description": "Open Ethereum Indexer",
   "private": true,
   "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
@@ -20,6 +22,9 @@
   },
   "dependencies": {
     "@apollo/server": "^4.11.3",
+    "@ethersproject/abi": "^5.8.0",
+    "@ethersproject/abstract-provider": "^5.8.0",
+    "@ethersproject/providers": "^5.8.0",
     "@nestjs/apollo": "^13.0.4",
     "@nestjs/axios": "^4.0.0",
     "@nestjs/common": "^11.0.1",
@@ -50,11 +55,7 @@
     "sqlite3": "^5.1.7",
     "typeorm": "^0.3.20",
     "typeorm-naming-strategies": "^4.1.0",
-    "xxhash-wasm": "1.0.1",
-    "@ethersproject/abi": "^5.7.0",
-    "@ethersproject/abstract-provider": "^5.7.0",
-    "@ethersproject/providers": "^5.7.0",
-    "camelcase": "5.3.1"
+    "xxhash-wasm": "1.0.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -69,6 +70,7 @@
     "@types/jest": "^29.5.14",
     "@types/node": "^22.13.1",
     "@types/supertest": "^6.0.2",
+    "camelcase": "5.3.1",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",
@@ -83,8 +85,6 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.7.3",
-    "typescript-eslint": "^8.20.0",
-    "@jest/globals": "^29.7.0",
-    "dotenv": "^16.4.5"
+    "typescript-eslint": "^8.20.0"
   }
-} 
+}

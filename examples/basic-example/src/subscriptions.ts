@@ -1,7 +1,4 @@
-import {
-  onEvent,
-  onBlock,
-} from 'core-module/event-manager/event-manager.service';
+import { onEvent, onBlock } from '@open-ethereum/indexer';
 
 onEvent('*:*', {
   onIndex: async (payload) => {

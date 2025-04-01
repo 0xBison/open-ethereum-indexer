@@ -1,4 +1,4 @@
-import { IndexerConfig } from 'indexer-module/indexer.module';
+import { IndexerConfig } from '@open-ethereum/indexer';
 
 export const indexerConfig: IndexerConfig = {
   indexer: {

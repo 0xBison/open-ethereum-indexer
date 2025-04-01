@@ -11,7 +11,8 @@
     "test:e2e": "pnpm --parallel test:e2e",
     "test:e2e:indexer": "cd packages/indexer && pnpm test:e2e",
     "lint": "pnpm -r lint",
-    "format": "prettier --write \"**/*.{ts,js,json,md}\""
+    "format": "prettier --write \"**/*.{ts,js,json,md}\"",
+    "start:example": "cd examples/basic-example && pnpm start:dev"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
@@ -21,5 +22,9 @@
     "ts-jest": "^29.1.2",
     "typescript": "^5.3.3"
   },
-  "packageManager": "pnpm@8.15.4"
+  "packageManager": "pnpm@8.15.4",
+  "workspaces": [
+    "packages/*",
+    "examples/*"
+  ]
 }
