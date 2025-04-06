@@ -4,8 +4,8 @@ import { entityRegistry } from '@open-ethereum/indexer';
 export const indexerConfig: IndexerConfig = {
   indexer: {
     network: {
-      rpcUrl: 'https://eth-mainnet.g.alchemy.com/',
-      chainId: 1,
+      rpcUrl: process.env.NODE_RPC_URL,
+      chainId: parseInt(process.env.CHAIN_ID),
     },
     contracts: {},
   },

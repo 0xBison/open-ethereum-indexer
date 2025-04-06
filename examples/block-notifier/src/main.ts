@@ -1,6 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { IndexerModule, setupSwagger } from '@open-ethereum/indexer';
-import { indexerConfig } from './indexer.config';
+import { setupSwagger } from '@open-ethereum/indexer';
 import './subscriptions';
 import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 import { Logger } from '@nestjs/common';
@@ -30,6 +29,7 @@ async function bootstrap() {
 
   logger.log(`Application started on port ${port}`);
   logger.log(`Swagger documentation available at http://localhost:${port}/api`);
+  logger.log(`Block notifier active - watching for millionth blocks!`);
 }
 
 void bootstrap();
