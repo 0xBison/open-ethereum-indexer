@@ -3,13 +3,13 @@ import { BlockMonitorService } from './block-monitor.service';
 import {
   EthereumHttpClient,
   EthereumHttpClientProviderIdentifier,
-} from 'ethereum-client-module/ethereum-http-client';
+} from '../../ethereum-client-module/ethereum-http-client';
 import {
   BlockProcessorService,
   BlockProcessorServiceIdentifier,
 } from '../block-processor/block-processor';
 import { CoreConfig } from '../core.config';
-import { ConfigService } from 'config-module';
+import { ConfigService } from '../../config-module/config.service';
 import { JsonStore, JsonStoreIdentifier } from 'nest-json-store';
 import { SyncStatus } from '../types';
 import { LATEST_INDEXED_BLOCK } from './constants';

@@ -8,6 +8,7 @@ import { Type } from '@nestjs/common';
 import { BlockIndex } from './core/BlockIndex.entity';
 import { CoreMigration1741835491000 } from './core/1741835491000-CoreMigration';
 import { entityRegistry } from '../generic-indexer-module/entity-registry';
+import { JsonStoreEntity } from 'nest-json-store';
 
 export interface DatabaseModuleOptions {
   entities?: Type<any>[];
@@ -39,6 +40,7 @@ export class DatabaseModule {
           useFactory: async (config: DatabaseConfig) => {
             const allEntities = [
               BlockIndex,
+              JsonStoreEntity,
               ...entities,
               ...registeredEntities,
             ];

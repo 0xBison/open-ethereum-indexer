@@ -5,7 +5,7 @@ import { of } from 'rxjs';
 import BigNumber from 'bignumber.js';
 import { Log } from '@ethersproject/abstract-provider';
 import { AxiosHeaders } from 'axios';
-import { ConfigService } from 'config-module/config.service';
+import { ConfigService } from '../config-module/config.service';
 
 describe('EthereumHttpClient', () => {
   let service: EthereumHttpClient;

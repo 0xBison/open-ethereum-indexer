@@ -34,12 +34,18 @@ import {
   TransactionalBlockProcessor,
   TransactionalBlockProcessorIdentifier,
 } from './block-processor';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { JsonStoreEntity } from 'nest-json-store';
 
 // Metrics configuration
 const metrics = [
   makeGaugeProvider({
     name: 'block_number',
     help: 'current block number',
+  }),
+  makeGaugeProvider({
+    name: 'latest_indexed_block_number',
+    help: 'latest indexed block number',
   }),
   makeGaugeProvider({
     name: 'latest_indexed_block_timestamp',
@@ -80,6 +86,7 @@ const metrics = [
           process.env.NODE_ENV === 'test' ? ['.env.test', '.env'] : '.env',
       }),
     }),
+    TypeOrmModule.forFeature([JsonStoreEntity]),
     EthereumClientModule,
     JsonStoreModule,
   ],

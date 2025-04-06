@@ -7,7 +7,8 @@ import {
 import { GenericEventLogIndexerAdapter } from './generic-event-log-indexer-adapter';
 import { BlockchainEventEntity } from './entity/BlockchainEventEntity';
 import { makeGaugeProvider } from '@willsoto/nestjs-prometheus';
-import { CoreModule } from 'core-module/core.module';
+import { CoreModule } from '../core-module/core.module';
+import { DatabaseModule } from '../database-module';
 
 // Export entities so they can be used by other modules
 export const GENERIC_INDEXER_ENTITIES = [BlockchainEventEntity];

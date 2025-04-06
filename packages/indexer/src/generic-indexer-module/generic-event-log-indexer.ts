@@ -22,7 +22,6 @@ export class GenericEventLogIndexer implements OnModuleInit {
   constructor(
     @InjectEntityManager()
     private entityManager: EntityManager,
-    private connection: DataSource,
     @InjectMetric('indexed_event') public indexedEventGauge: Gauge<string>,
   ) {}
 

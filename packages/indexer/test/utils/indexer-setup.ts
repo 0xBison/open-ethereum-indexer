@@ -1,21 +1,21 @@
 import { Module } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { INestApplication } from '@nestjs/common';
-import { Config, ConfigModule } from 'config-module';
+import { Config, ConfigModule } from '../../src/config-module';
 import {
   DatabaseModule,
   DatabaseModuleOptions,
-} from 'database-module/database.module';
-import { CoreModule } from 'core-module/core.module';
-import { EthereumClientModule } from 'ethereum-client-module/ethereum-client.module';
-import { GenericIndexerModule } from 'generic-indexer-module/generic-indexer.module';
-import { GenericControllerModule } from 'generic-indexer-module/generic-controller.module';
+} from '../../src/database-module/database.module';
+import { CoreModule } from '../../src/core-module/core.module';
+import { EthereumClientModule } from '../../src/ethereum-client-module/ethereum-client.module';
+import { GenericIndexerModule } from '../../src/generic-indexer-module/generic-indexer.module';
+import { GenericControllerModule } from '../../src/generic-indexer-module/generic-controller.module';
 import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 import { Logger } from '@nestjs/common';
 import { Test, TestingModule, TestingModuleBuilder } from '@nestjs/testing';
-import { DatabaseConfig } from 'database-module/database.config';
+import { DatabaseConfig } from '../../src/database-module/database.config';
 import {
   PostgreSqlContainer,
   StartedPostgreSqlContainer,

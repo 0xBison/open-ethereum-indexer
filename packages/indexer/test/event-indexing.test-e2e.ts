@@ -13,7 +13,7 @@ import {
   onBlock,
   onEvent,
   sleep,
-} from 'core-module';
+} from '../src/core-module';
 import { DataSource, EntityManager } from 'typeorm';
 import {
   DynamicArrayEntity_439e6b8c,
@@ -38,7 +38,7 @@ import {
 import { ethers } from 'ethers';
 import SomeContractAbi from './someContract/abis/SomeContract.json';
 import { InitialSchema1742274226041 } from './someContract/migrations/1742274226041-InitialSchema';
-import { EventManagerService } from 'core-module';
+import { EventManagerService } from '../src/core-module';
 
 // Set this to true to use containerized node, false for local node
 const USE_CONTAINERIZED_NODE = true;

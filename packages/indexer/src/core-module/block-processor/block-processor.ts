@@ -29,7 +29,8 @@ export class BlockProcessorService {
     private eventManager: EventManagerService,
     @InjectMetric('logs_count_per_block')
     public logCountPerBlock: Histogram<string>,
-    @InjectMetric('block_number') public blockNumberGauge: Gauge<string>,
+    @InjectMetric('latest_indexed_block_number')
+    public latestBlockNumberGauge: Gauge<string>,
     @InjectMetric('latest_indexed_block_timestamp')
     public latestBlockTimeGauge: Gauge<string>,
     @InjectMetric('block_process_iteration_duration')
@@ -83,10 +84,11 @@ export class BlockProcessorService {
       this.indexedBlockCounter.inc();
     }
 
-    this.blockNumberGauge.set(blockEvent.number);
     this.latestBlockTimeGauge.set(blockEvent.timestamp);
+    this.latestBlockNumberGauge.set(blockEvent.number);
     // get the end timestamp of the block process iteration
     const endBlockEventToProcessTimestamp = Date.now();
+
     // get the block process iteration duration from the 2 timestamps
     const blockProcessIterationDuration =
       endBlockEventToProcessTimestamp - startBlockEventToProcessTimestamp;

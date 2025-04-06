@@ -8,4 +8,3 @@ export * from './graphql-module';
 export * from './logger-module';
 export * from './utils';
 export * from './types';
-export * from './subscriptions';

@@ -4,7 +4,7 @@ import {
   EVENT_MANAGER_SERVICE,
 } from './event-manager.service';
 import { LogEvent } from './types';
-import { ConfigService } from 'config-module';
+import { ConfigService } from '../../config-module';
 
 // Create contract addresses for testing
 const CONTRACT_ADDRESSES = {
