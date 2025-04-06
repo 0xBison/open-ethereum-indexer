@@ -6,7 +6,7 @@ import { Formatter } from '@ethersproject/providers';
 import BigNumber from 'bignumber.js';
 import { Log } from '@ethersproject/abstract-provider';
 import { TopicList } from '../config-module/types';
-import { WILDCARD_ADDRESS } from 'config-module/config.service';
+import { WILDCARD_ADDRESS } from '../config-module/config.service';
 
 export interface FilterLogs {
   fromBlock: number;
@@ -457,6 +457,34 @@ export class EthereumHttpClient {
 
     // Use enhanced filter logs to get and filter the logs
     return this.enhancedFilterLogs(blockRange, topicFilters);
+  }
+
+  /**
+   * Fetches the current gas price using eth_gasPrice RPC call
+   * @returns Current gas price in wei as bigint
+   */
+  async getGasPrice(): Promise<bigint> {
+    const gasPriceRequest = {
+      jsonrpc: '2.0',
+      method: 'eth_gasPrice',
+      params: [],
+      id: 1,
+    };
+
+    const responseObservable = this.httpService.request({
+      url: this.rpcUrl,
+      method: 'post',
+      data: gasPriceRequest,
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    const { data } = (await lastValueFrom(responseObservable)) as any;
+
+    if (!data.result) {
+      throw new Error('Failed to fetch gas price');
+    }
+
+    return BigInt(data.result);
   }
 
   getUrl(): string {

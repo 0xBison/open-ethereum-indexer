@@ -52,11 +52,17 @@ export class ConfigService {
       const contractInterface = new Interface(abi);
 
       // Process each event
-      for (const eventFragment of filteredEvents) {
-        if (!eventFragment.name) continue;
+      for (const item of filteredEvents) {
+        if (!item.name) continue;
+
+        const inputTypes = item.inputs?.map((input) => input.type).join(',');
+        const signature = `${item.name}(${inputTypes})`;
+
+        // Get the event fragment using the full signature
+        const eventFragment = contractInterface.getEvent(signature);
 
         // Generate topic hash for this event
-        const topicHash = contractInterface.getEventTopic(eventFragment.name);
+        const topicHash = contractInterface.getEventTopic(eventFragment);
 
         // Normalize block ranges
         const normalizedStartBlock = startBlock ?? 0;

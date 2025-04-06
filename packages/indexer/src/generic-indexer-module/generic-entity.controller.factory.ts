@@ -22,7 +22,7 @@ export function createGenericEntityController<T extends ObjectLiteral>(
   entityName: string,
 ): Type<any> {
   @ApiTags(`Events|${entityName}`)
-  @Controller(entityName)
+  @Controller(`events/${entityName}`)
   class GenericEntityController {
     constructor(
       @InjectRepository(entity)

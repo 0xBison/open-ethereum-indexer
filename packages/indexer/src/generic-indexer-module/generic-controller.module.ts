@@ -2,6 +2,7 @@ import { Module, DynamicModule } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { createGenericEntityController } from './generic-entity.controller.factory';
 import { entityRegistry } from './entity-registry';
+import { EntityListController } from './entity-list.controller';
 
 @Module({})
 export class GenericControllerModule {
@@ -17,7 +18,7 @@ export class GenericControllerModule {
     });
 
     // Create controllers for each entity
-    const controllers = blockchainEventEntities.map((entity) => {
+    const genericControllers = blockchainEventEntities.map((entity) => {
       // Cant actually do the below since name isn't unique...
       // Extract entity name without the hash suffix (e.g., "Transfer" from "Transfer_ca44c4d7")
       // const fullName = entity.name;
@@ -32,7 +33,7 @@ export class GenericControllerModule {
     return {
       module: GenericControllerModule,
       imports: [TypeOrmModule.forFeature(blockchainEventEntities)],
-      controllers,
+      controllers: [...genericControllers, EntityListController],
     };
   }
 }

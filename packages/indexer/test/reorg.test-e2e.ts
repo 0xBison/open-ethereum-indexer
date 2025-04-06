@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 import { describe, expect, it } from '@jest/globals';
 import { getNodeSetup, NodeSetup } from './utils/node-setup';
-import { sleep, BlockMonitorServiceIdentifier } from 'core-module';
+import { sleep, BlockMonitorServiceIdentifier } from '../src/core-module';
 import { performChainReorg } from './node-functions';
 import { INestApplication } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';

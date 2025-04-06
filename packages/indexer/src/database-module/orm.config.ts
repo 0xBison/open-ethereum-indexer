@@ -3,9 +3,10 @@ import { DatabaseConfig } from './database.config';
 import { DataSource } from 'typeorm';
 import { CreateJsonStore1710000000000, JsonStoreEntity } from 'nest-json-store';
 import { Type } from '@nestjs/common';
+import { BlockIndex } from './core/BlockIndex.entity';
 
 // Core entities that are always included
-const CORE_ENTITIES = [JsonStoreEntity];
+const CORE_ENTITIES = [BlockIndex, JsonStoreEntity];
 
 export const typeOrmModuleOptions = (
   databaseConfig: DatabaseConfig,

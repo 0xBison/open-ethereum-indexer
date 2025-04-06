@@ -5,7 +5,7 @@ import {
   EthereumHttpClientProviderIdentifier,
 } from './ethereum-http-client';
 import { HttpService } from '@nestjs/axios';
-import { ConfigModule, ConfigService } from 'config-module';
+import { ConfigModule, ConfigService } from '../config-module';
 
 @Global()
 @Module({

@@ -9,18 +9,18 @@ import {
 import {
   EthereumHttpClient,
   EthereumHttpClientProviderIdentifier,
-} from 'ethereum-client-module/ethereum-http-client';
+} from '../../ethereum-client-module/ethereum-http-client';
 import {
   BlockProcessorService,
   BlockProcessorServiceIdentifier,
 } from '../block-processor/block-processor';
 import { BlockRange, BlocksBehind, SyncStatus } from '../types';
 import { InjectMetric } from '@willsoto/nestjs-prometheus';
-import { Histogram } from 'prom-client';
+import { Gauge, Histogram } from 'prom-client';
 import { CoreConfig } from '../core.config';
 import { getNextBlockRange } from '../utils/get-next-block-range';
 import { sleep } from '../utils/sleep';
-import { ConfigService, getTopicFiltersToSubscribe } from 'config-module';
+import { ConfigService, getTopicFiltersToSubscribe } from '../../config-module';
 import { JsonStore, JsonStoreIdentifier } from 'nest-json-store';
 import { LATEST_BLOCK, LATEST_INDEXED_BLOCK } from './constants';
 import { BlockEvent } from '../../types';
@@ -50,6 +50,7 @@ export class BlockMonitorService
     private config: CoreConfig,
     private configService: ConfigService,
     @Inject(JsonStoreIdentifier) private cacheDatabase: JsonStore,
+    @InjectMetric('block_number') public blockNumberGauge: Gauge<string>,
   ) {
     this.status = SyncStatus.AWAITING_INITIALIZATION;
   }
@@ -173,6 +174,8 @@ export class BlockMonitorService
     const latestBlockProcessed = await this.getLatestIndexedBlock();
 
     const latestBlock = await this.client.headerByNumber();
+
+    this.blockNumberGauge.set(latestBlock.number);
 
     // No previously stored block, so no blocks have elapsed
     if (!latestBlockProcessed) {

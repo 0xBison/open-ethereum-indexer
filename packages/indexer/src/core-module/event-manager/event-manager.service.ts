@@ -6,7 +6,7 @@ import {
   onContractResponder,
   LogEvent,
 } from './types';
-import { ConfigService } from 'config-module';
+import { ConfigService } from '../../config-module';
 import { LogDescription } from 'ethers/lib/utils';
 import { BlockEvent } from '../../types';
 
