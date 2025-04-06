@@ -1,0 +1,294 @@
+# Metrics & Monitoring
+
+Open Ethereum Indexer includes built-in support for metrics and monitoring using Prometheus. This page explains how to access, configure, and extend the metrics capabilities of your indexer.
+
+## Built-in Metrics
+
+The indexer automatically collects and exposes various metrics about its operation:
+
+- **Block processing metrics**: Number of blocks processed, processing time
+- **Event processing metrics**: Number of events indexed, processing time
+- **Database metrics**: Query execution time, connection pool status
+- **HTTP metrics**: API request count, response time, error rate
+- **System metrics**: Memory usage, CPU usage
+
+## Accessing Metrics
+
+By default, metrics are exposed on a separate port (to avoid affecting your main API performance) at:
+
+```
+http://localhost:3066/metrics
+```
+
+You can change the metrics port by setting the `METRICS_PORT` environment variable or in your application's bootstrap code:
+
+```typescript
+// main.ts
+import { NestFactory } from '@nestjs/core';
+import { PrometheusModule } from '@willsoto/nestjs-prometheus';
+import { AppModule } from './app.module';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+
+  // Create a separate app for metrics
+  const metricsApp = await NestFactory.create(
+    PrometheusModule.register({ path: '/metrics' }),
+  );
+
+  await app.listen(3033);
+
+  // Configure metrics port
+  const metricsPort = process.env.METRICS_PORT || 3066;
+  await metricsApp.listen(metricsPort);
+
+  console.log(`Application running on port 3033`);
+  console.log(`Metrics available at http://localhost:${metricsPort}/metrics`);
+}
+bootstrap();
+```
+
+## Configuring Metrics
+
+### Disabling Metrics
+
+If you don't need metrics, you can disable them in your configuration:
+
+```typescript
+const indexerConfig: IndexerConfig = {
+  // ...other config
+  app: {
+    disableMetrics: true,
+  },
+};
+```
+
+### Custom Metrics Configuration
+
+You can customize the Prometheus configuration by modifying the module registration:
+
+```typescript
+import { Module } from '@nestjs/common';
+import { PrometheusModule } from '@willsoto/nestjs-prometheus';
+
+@Module({
+  imports: [
+    PrometheusModule.register({
+      path: '/custom-metrics',
+      defaultMetrics: {
+        enabled: true,
+        config: {},
+      },
+      defaultLabels: {
+        app: 'my-ethereum-indexer',
+        environment: process.env.NODE_ENV || 'development',
+      },
+    }),
+  ],
+})
+export class AppModule {}
+```
+
+## Adding Custom Metrics
+
+You can add your own custom metrics to track specific aspects of your application:
+
+```typescript
+import { Injectable } from '@nestjs/common';
+import { InjectMetric } from '@willsoto/nestjs-prometheus';
+import { Counter, Gauge, Histogram } from 'prom-client';
+
+@Injectable()
+export class CustomMetricsService {
+  constructor(
+    @InjectMetric('transfer_count')
+    private transferCounter: Counter<string>,
+
+    @InjectMetric('token_balance')
+    private tokenBalanceGauge: Gauge<string>,
+
+    @InjectMetric('event_processing_time')
+    private eventProcessingHistogram: Histogram<string>,
+  ) {}
+
+  // Track a new transfer
+  trackTransfer(tokenSymbol: string) {
+    this.transferCounter.inc({ token: tokenSymbol });
+  }
+
+  // Update token balance
+  updateTokenBalance(address: string, balance: string) {
+    this.tokenBalanceGauge.set({ address }, Number(balance));
+  }
+
+  // Track event processing time
+  trackEventProcessing(eventName: string, timeMs: number) {
+    this.eventProcessingHistogram.observe({ event: eventName }, timeMs);
+  }
+}
+```
+
+Register the metrics in a module:
+
+```typescript
+import { Module } from '@nestjs/common';
+import {
+  makeCounterProvider,
+  makeGaugeProvider,
+  makeHistogramProvider,
+} from '@willsoto/nestjs-prometheus';
+import { CustomMetricsService } from './custom-metrics.service';
+
+@Module({
+  providers: [
+    CustomMetricsService,
+    makeCounterProvider({
+      name: 'transfer_count',
+      help: 'Count of transfers by token',
+      labelNames: ['token'],
+    }),
+    makeGaugeProvider({
+      name: 'token_balance',
+      help: 'Token balance by address',
+      labelNames: ['address'],
+    }),
+    makeHistogramProvider({
+      name: 'event_processing_time',
+      help: 'Event processing time in milliseconds',
+      labelNames: ['event'],
+      buckets: [10, 50, 100, 250, 500, 1000, 2500, 5000],
+    }),
+  ],
+  exports: [CustomMetricsService],
+})
+export class MetricsModule {}
+```
+
+## Using Metrics in Handlers
+
+You can use your metrics service in your event and block handlers:
+
+```typescript
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { EventManagerService } from '@open-ethereum/indexer';
+import { CustomMetricsService } from './metrics/custom-metrics.service';
+
+@Injectable()
+export class EventService implements OnModuleInit {
+  constructor(
+    private readonly eventManager: EventManagerService,
+    private readonly metricsService: CustomMetricsService,
+  ) {}
+
+  onModuleInit() {
+    this.eventManager.onEvent('ERC20:Transfer', {
+      onIndex: async (payload) => {
+        const startTime = Date.now();
+
+        // Process the event
+        const { from, to, value } = payload.parsedEvent.args;
+
+        // Track the metrics
+        this.metricsService.trackTransfer('ERC20');
+        this.metricsService.trackEventProcessing(
+          'Transfer',
+          Date.now() - startTime,
+        );
+      },
+    });
+  }
+}
+```
+
+## Monitoring with Prometheus and Grafana
+
+These metrics can be scraped by Prometheus and visualized in Grafana dashboards.
+
+### Sample Prometheus Configuration
+
+```yaml
+# prometheus.yml
+scrape_configs:
+  - job_name: 'ethereum-indexer'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['localhost:3066']
+```
+
+### Sample Grafana Dashboard
+
+You can create dashboards to visualize your indexer's performance:
+
+- Block processing rate and time
+- Event processing rate and time
+- Database performance
+- API usage and performance
+- System resource usage
+
+## Health Checks
+
+In addition to metrics, you can add health checks to monitor your indexer's status:
+
+```typescript
+import { Controller, Get } from '@nestjs/common';
+import {
+  HealthCheck,
+  HealthCheckService,
+  TypeOrmHealthIndicator,
+} from '@nestjs/terminus';
+
+@Controller('health')
+export class HealthController {
+  constructor(
+    private health: HealthCheckService,
+    private db: TypeOrmHealthIndicator,
+  ) {}
+
+  @Get()
+  @HealthCheck()
+  check() {
+    return this.health.check([() => this.db.pingCheck('database')]);
+  }
+}
+```
+
+## Alerting
+
+With Prometheus, you can set up alerts for various conditions:
+
+- Indexer falling behind the chain
+- High error rates
+- Database connection issues
+- System resource exhaustion
+
+Example Prometheus alert rule:
+
+```yaml
+groups:
+  - name: indexer_alerts
+    rules:
+      - alert: IndexerBehind
+        expr: max_block_height - last_indexed_block > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Indexer falling behind chain'
+          description: 'Indexer is more than 10 blocks behind the chain for 5 minutes.'
+```
+
+## Performance Tuning
+
+Use the metrics to identify bottlenecks in your indexer:
+
+1. Look for event handlers with high processing times
+2. Check database query performance
+3. Monitor memory usage patterns
+4. Analyze block processing rate
+
+Based on the metrics, you can tune your indexer's configuration:
+
+- Adjust `MAX_BLOCKS_PER_QUERY` to balance throughput and memory usage
+- Optimize database indices for common queries
+- Scale horizontally for high-volume chains
+- Consider dedicated instances for specific tasks

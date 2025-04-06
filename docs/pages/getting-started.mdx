@@ -1,0 +1,328 @@
+# Getting Started
+
+This guide will help you set up and run your first Open Ethereum Indexer project.
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+- **Node.js** (v20+)
+- **PostgreSQL** (using [Docker](https://www.docker.com/) is recommended)
+- **Access to an Ethereum node** via RPC URL (e.g., from [Alchemy](https://www.alchemy.com/), or your own node)
+
+## Installation
+
+### Creating a New Project
+
+The easiest way to get started is to use the [NestJS CLI](https://docs.nestjs.com/cli/overview) to create a new project:
+
+1. Install the NestJS CLI:
+
+```bash
+npm install -g @nestjs/cli
+```
+
+2. Create a new project:
+
+```bash
+nest new my-indexer
+```
+
+3. Delete the files in the `src` directory so you have a clean project.
+
+4. Install the Open Ethereum Indexer package and typeorm
+
+```bash
+npm install @open-ethereum/indexer typeorm
+```
+
+5.
+
+### Setting up the Environment
+
+1. Create a `.env` file with your configuration:
+
+```bash
+# .env
+RPC_URL=https://eth-mainnet.g.alchemy.com/v2/your-api-key
+SQL_DB=my_indexer
+SQL_USERNAME=postgres
+SQL_PASSWORD=your-password
+SQL_HOST=localhost
+SQL_PORT=5432
+PORT=3050
+METRICS_PORT=3051
+```
+
+Replace the values with your specific configuration.
+
+## Basic Project Structure
+
+The basic structure of an Open Ethereum Indexer project looks like this:
+
+```
+my-indexer/
+├── src/
+│   ├── app.module.ts         # Main application module
+│   ├── indexer.config.ts     # Indexer configuration
+│   ├── main.ts               # Application entry point
+│   ├── subscriptions.ts      # Event and block subscriptions
+│   └── entities/             # Entity definitions (optional)
+├── package.json
+└── .env
+```
+
+Let's look at each of these files.
+
+### Configuration
+
+The configuration file (`src/indexer.config.ts`) defines your blockchain connection, database settings, and other options:
+
+```typescript
+// src/indexer.config.ts
+import { IndexerConfig } from '@open-ethereum/indexer';
+import ERC20_ABI from './abis/ERC20.json'; // Optional: import ABIs for your contracts
+
+export const indexerConfig: IndexerConfig = {
+  indexer: {
+    name: 'my-indexer',
+    chains: {
+      mainnet: {
+        rpcUrl:
+          process.env.RPC_URL ||
+          'https://eth-mainnet.g.alchemy.com/v2/your-api-key',
+      },
+    },
+    contracts: {
+      // Optional: define the contracts you want to index
+      USDC: {
+        address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+        startBlock: 6082465, // The block number to start indexing from
+        abi: ERC20_ABI,
+      },
+    },
+    blockMonitor: {
+      sleepInterval: Number(process.env.SLEEP_INTERVAL) || 1000,
+      maxBlocksPerQuery: Number(process.env.MAX_BLOCKS_PER_QUERY) || 10,
+    },
+  },
+  database: {
+    type: 'postgres',
+    host: process.env.SQL_HOST || 'localhost',
+    port: Number(process.env.SQL_PORT) || 5432,
+    username: process.env.SQL_USERNAME || 'postgres',
+    password: process.env.SQL_PASSWORD || 'password',
+    database: process.env.SQL_DB || 'my_indexer',
+    synchronize: true, // Automatically create database schema (use with caution in production)
+    logging: false,
+  },
+};
+```
+
+### Subscriptions
+
+The subscriptions file (`src/subscriptions.ts`) defines handlers for blockchain events and blocks:
+
+```typescript
+// src/subscriptions.ts
+import { onEvent, onBlock } from '@open-ethereum/indexer';
+
+// Listen for USDC Transfer events
+onEvent('USDC:Transfer', {
+  onIndex: async (payload) => {
+    const { from, to, value } = payload.parsedEvent.args;
+    console.log(`USDC Transfer: ${from} -> ${to}: ${value.toString()}`);
+    // Here you would typically store this data in the database
+  },
+});
+
+// Listen for new blocks
+onBlock({
+  onIndex: async (payload) => {
+    const { number, hash, timestamp } = payload;
+    console.log(`New block: ${number}`);
+    // Here you would typically update your latest block information
+  },
+});
+```
+
+### Application Module
+
+The application module (`src/app.module.ts`) integrates the indexer into your NestJS application:
+
+```typescript
+// src/app.module.ts
+import { Module } from '@nestjs/common';
+import { IndexerModule } from '@open-ethereum/indexer';
+import { indexerConfig } from './indexer.config';
+import './subscriptions';
+
+@Module({
+  imports: [IndexerModule.forRoot(indexerConfig)],
+})
+export class AppModule {}
+```
+
+### Main Application
+
+The main file (`src/main.ts`) bootstraps your NestJS application:
+
+```typescript
+// src/main.ts
+import { NestFactory } from '@nestjs/core';
+import { setupSwagger } from '@open-ethereum/indexer';
+import { PrometheusModule } from '@willsoto/nestjs-prometheus';
+import { Logger } from '@nestjs/common';
+import { AppModule } from './app.module';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true,
+  });
+
+  // Create a separate app for metrics
+  const metricsApp = await NestFactory.create(
+    PrometheusModule.register({ path: '/metrics' }),
+  );
+
+  // Get the logger
+  const logger = app.get(Logger);
+  app.useLogger(logger);
+
+  // Setup Swagger API documentation
+  setupSwagger(app);
+
+  // Start the main application
+  const port = process.env.PORT ?? 3050;
+  await app.listen(port);
+
+  // Start the metrics server
+  const metricsPort = process.env.METRICS_PORT ?? 3051;
+  await metricsApp.listen(metricsPort);
+
+  logger.log(`Application started on port ${port}`);
+  logger.log(
+    `Swagger documentation available at http://localhost:${port}/api-docs`,
+  );
+  logger.log(`Metrics available at http://localhost:${metricsPort}/metrics`);
+}
+bootstrap();
+```
+
+## Running Your Indexer
+
+To start your indexer:
+
+```bash
+# Development mode
+npm run start:dev
+
+# Production mode
+npm run build
+npm run start:prod
+```
+
+## Creating Entities
+
+To store blockchain data, you'll want to create TypeORM entities. Here's an example for ERC-20 transfers:
+
+```typescript
+// src/entities/Transfer.entity.ts
+import { Entity, Column, PrimaryGeneratedColumn, Index } from 'typeorm';
+
+@Entity()
+export class Transfer {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column()
+  @Index()
+  contractAddress: string;
+
+  @Column()
+  @Index()
+  from: string;
+
+  @Column()
+  @Index()
+  to: string;
+
+  @Column('varchar')
+  value: string; // Stored as string to preserve precision
+
+  @Column('int')
+  @Index()
+  blockNumber: number;
+
+  @Column()
+  transactionHash: string;
+
+  @Column('int')
+  timestamp: number;
+}
+```
+
+Then update your indexer configuration to include the entity:
+
+```typescript
+// Update indexer.config.ts database options
+import { Transfer } from './entities/Transfer.entity';
+
+// ...
+database: {
+  // ...
+  entities: [Transfer],
+  // ...
+}
+```
+
+And update your subscription to store the data:
+
+```typescript
+// Update subscriptions.ts
+import { getRepository } from 'typeorm';
+import { Transfer } from './entities/Transfer.entity';
+
+onEvent('USDC:Transfer', {
+  onIndex: async (payload) => {
+    const { from, to, value } = payload.parsedEvent.args;
+    const transferRepo = getRepository(Transfer);
+
+    const transfer = new Transfer();
+    transfer.contractAddress = payload.log.address;
+    transfer.from = from;
+    transfer.to = to;
+    transfer.value = value.toString();
+    transfer.blockNumber = payload.block.number;
+    transfer.transactionHash = payload.log.transactionHash;
+    transfer.timestamp = payload.block.timestamp;
+
+    await transferRepo.save(transfer);
+  },
+});
+```
+
+## Accessing the API
+
+Once your indexer is running, you can access:
+
+- The REST API at `http://localhost:3050/api`
+- The Swagger documentation at `http://localhost:3050/api-docs`
+- The metrics at `http://localhost:3051/metrics`
+
+For example, to get recent transfers:
+
+```
+GET http://localhost:3050/api/transfers?limit=10&orderBy=blockNumber&orderDirection=DESC
+```
+
+## Next Steps
+
+Now that you have a basic indexer running, you might want to:
+
+- Add more [Event Handlers](/event-indexing) for different contracts
+- Customize your [Block Handlers](/block-monitoring) for specific analytics
+- Create more [Entities](/entity-management) to store complex data
+- Explore the [API Reference](/api) to understand available endpoints
+- Set up [Metrics & Monitoring](/metrics) for your indexer
+- Check out the [Examples](/basic-example) for more advanced use cases

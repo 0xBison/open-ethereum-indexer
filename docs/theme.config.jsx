@@ -1,3 +1,5 @@
+import React from 'react'
+
 export default {
   logo: <span>Open Ethereum Indexer</span>,
   project: {
@@ -16,5 +18,8 @@ export default {
   },
   footer: {
     text: 'MIT - Open Ethereum Indexer.'
-  }
+  },
+  showCopyCode: true,
+  faviconGlyph: "✨",
+  darkMode: true
 } 

@@ -6,17 +6,20 @@ A flexible and modular Ethereum (or any other evm chain) blockchain indexer serv
 
 Open Ethereum Indexer is designed to simplify the process of indexing and querying Ethereum (or any other evm chain) blockchain data. It provides a robust framework for monitoring blockchain events and storing indexed data in a structured database for easy access and analysis.
 
+> [!WARNING]
+> Since Open Ethereum Indexer is still in development, you should wait until a stable 1.0.0 version is released before using it in production as critical features are not complete (reorg support) and the API is subject to change
+
 ## Features
 
 - **Modular Architecture**: Built with NestJS. Follows a modular design pattern for easy extension and customization. Allows you to register block and event handlers for any
-- **EVM Network Support**: Supports many networks (and custom networks) as long as they conform to the Ethereum JSON RPC Specification
+- **EVM Network Support**: Supports any network (including custom networks) as long as they conform to the Ethereum JSON RPC Specification
 - **Event-Based Indexing**: Index specific events from smart contracts with customizable handlers
 - **Block Monitoring**: Track new blocks and process blockchain data in real-time
 - **Metrics & Monitoring**: Built-in Prometheus integration for monitoring system metrics
 - **RESTful API**: Query indexed data through a REST API
 - **Reorg handling**: Coming soon
 - **Websocket API**: Coming soon
-- **GraphQL API**: Coming soon
+- **GraphQL API**: Experimental.
 - **Frontend**: Coming soon
 - **Type-safe Handlers**: Coming soon
 
