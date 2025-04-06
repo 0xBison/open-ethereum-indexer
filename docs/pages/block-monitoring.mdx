@@ -1,0 +1,210 @@
+# Block Monitoring
+
+The Open Ethereum Indexer provides a robust system for monitoring new blocks on the blockchain. This page explains how to set up block handlers and process blockchain blocks in your application.
+
+## Block Handlers
+
+Block handlers allow you to react to new blocks being mined on the blockchain. You can use them to:
+
+- Track blockchain progression
+- Process blocks for custom analytics
+- Trigger actions based on block properties (e.g., block number milestones)
+- Record block data in your database
+
+### Registering Block Handlers
+
+You can register block handlers using the `onBlock` function:
+
+```typescript
+import { onBlock } from '@open-ethereum/indexer';
+
+onBlock({
+  onIndex: async (payload) => {
+    // This code runs when a block is indexed
+    console.log('Block indexed:', payload);
+
+    // Access block data
+    const { number, hash, timestamp } = payload;
+    console.log(
+      `Block #${number} with hash ${hash} at ${new Date(timestamp * 1000)}`,
+    );
+
+    // Store block data or trigger other actions
+  },
+  onDeindex: async (payload) => {
+    // This code runs if a block is deindexed (during a chain reorganization)
+    console.log('Block deindexed:', payload);
+
+    // Remove or update stored data as necessary
+  },
+});
+```
+
+### Block Payload
+
+The block handler receives a payload with the following structure:
+
+```typescript
+interface BlockEvent {
+  number: number; // Block number
+  hash: string; // Block hash
+  parentHash: string; // Parent block hash
+  timestamp: number; // Block timestamp (in seconds)
+  // ... other block properties
+}
+```
+
+## Example: Block Notifier
+
+Here's an example of a block monitoring system that detects and notifies about specific block milestones (blocks that are multiples of 1,000,000):
+
+```typescript
+import { onBlock } from '@open-ethereum/indexer';
+
+// Function to check if a block number is a millionth block
+const isMillionthBlock = (blockNumber: number): boolean => {
+  return blockNumber % 1_000_000 === 0;
+};
+
+// Register a handler for all block events
+onBlock({
+  onIndex: async (payload) => {
+    const { number, hash, timestamp } = payload;
+
+    // Check if this is a millionth block
+    if (isMillionthBlock(number)) {
+      const humanReadableTime = new Date(timestamp * 1000).toLocaleString();
+      const message = `🎉 MILESTONE: Block ${number} detected!\nHash: ${hash}\nTime: ${humanReadableTime}`;
+
+      console.log(message);
+
+      // Send notification (e.g., to a messaging service)
+      await sendNotification(message);
+    }
+  },
+});
+```
+
+## Working with Block Data
+
+### Saving Block Data
+
+To save block data to the database, you can use TypeORM entities:
+
+```typescript
+import { getRepository } from 'typeorm';
+import { Block } from './entities/Block.entity';
+
+onBlock({
+  onIndex: async (payload) => {
+    const { number, hash, parentHash, timestamp } = payload;
+    const blockRepo = getRepository(Block);
+
+    // Create and save entity
+    const block = new Block();
+    block.number = number;
+    block.hash = hash;
+    block.parentHash = parentHash;
+    block.timestamp = timestamp;
+
+    await blockRepo.save(block);
+  },
+});
+```
+
+## Block Monitor Configuration
+
+The block monitor can be configured through environment variables:
+
+```env
+# Block monitor config
+SLEEP_INTERVAL=1000        # Interval between block checks (ms)
+MAX_BLOCKS_PER_QUERY=10    # Maximum blocks to process in one query
+```
+
+These settings affect:
+
+- `SLEEP_INTERVAL`: How frequently the indexer checks for new blocks
+- `MAX_BLOCKS_PER_QUERY`: Maximum number of blocks to process in a single batch
+
+You can also configure these values programmatically in your indexer configuration:
+
+```typescript
+const indexerConfig: IndexerConfig = {
+  indexer: {
+    name: 'my-indexer',
+    chains: {
+      mainnet: {
+        rpcUrl:
+          process.env.RPC_URL ||
+          'https://eth-mainnet.g.alchemy.com/v2/your-api-key',
+      },
+    },
+    contracts: {},
+    blockMonitor: {
+      sleepInterval: 1000, // ms
+      maxBlocksPerQuery: 10,
+    },
+  },
+  // ... other config
+};
+```
+
+## Disabling the Block Monitor Controller
+
+If you don't need the built-in block monitor controller endpoints, you can disable them in your configuration:
+
+```typescript
+const indexerConfig: IndexerConfig = {
+  // ... other config
+  app: {
+    disableController: true, // Disables the built-in controller
+  },
+};
+```
+
+## Example: Custom Block Storage
+
+Here's a more complex example that stores blocks and calculates statistics:
+
+```typescript
+import { onBlock } from '@open-ethereum/indexer';
+import { getRepository } from 'typeorm';
+import { Block } from './entities/Block.entity';
+import { BlockStat } from './entities/BlockStat.entity';
+
+let totalGasUsed = 0;
+let blockCount = 0;
+
+onBlock({
+  onIndex: async (payload) => {
+    const { number, hash, parentHash, timestamp, gasUsed } = payload;
+
+    // Store the block
+    const blockRepo = getRepository(Block);
+    const block = new Block();
+    block.number = number;
+    block.hash = hash;
+    block.parentHash = parentHash;
+    block.timestamp = timestamp;
+    block.gasUsed = gasUsed.toString();
+
+    await blockRepo.save(block);
+
+    // Update statistics
+    totalGasUsed += Number(gasUsed);
+    blockCount++;
+
+    // Every 100 blocks, update statistics
+    if (number % 100 === 0) {
+      const statRepo = getRepository(BlockStat);
+      const stat = new BlockStat();
+      stat.latestBlock = number;
+      stat.averageGasUsed = (totalGasUsed / blockCount).toString();
+      stat.timestamp = Math.floor(Date.now() / 1000);
+
+      await statRepo.save(stat);
+    }
+  },
+});
+```

@@ -1,0 +1,182 @@
+# Event Indexing
+
+Open Ethereum Indexer provides a powerful system for monitoring and processing smart contract events. This page explains how to set up event handlers and process blockchain events in your application.
+
+## Event Handlers
+
+Event handlers allow you to react to specific events emitted by smart contracts on the blockchain.
+
+### Registering Event Handlers
+
+You can register event handlers using the `onEvent` function:
+
+```typescript
+import { onEvent } from '@open-ethereum/indexer';
+
+// Register a handler for a specific event
+onEvent('ContractName:EventName', {
+  onIndex: async (payload) => {
+    // This code runs when the event is indexed
+    console.log('Event indexed:', payload);
+
+    // Process event data
+    const { log, parsedEvent, block } = payload;
+    const { args } = parsedEvent;
+
+    // Access event arguments
+    console.log('Event arguments:', args);
+
+    // Store event data in database or trigger other actions
+  },
+  onDeindex: async (payload) => {
+    // This code runs if the event is deindexed (during a chain reorganization)
+    console.log('Event deindexed:', payload);
+
+    // Remove or update stored data as necessary
+  },
+});
+```
+
+### Event Pattern Matching
+
+The event pattern format is `ContractName:EventName` and supports wildcards:
+
+- `*:Transfer` - Match all `Transfer` events from any contract
+- `ERC20:*` - Match all events from `ERC20` contracts
+- `*:*` - Match all events from all contracts
+
+### Event Payload
+
+The event handler receives a payload with the following structure:
+
+```typescript
+interface LogEvent {
+  log: ethers.providers.Log; // Raw log data
+  parsedEvent: ethers.utils.LogDescription; // Parsed event data
+  block: BlockEvent; // Block information
+}
+```
+
+## Order of Execution
+
+Event handlers are run in the order they are registered. This is important to keep in mind when building dependencies between handlers.
+
+## Generic vs. Specific Indexing
+
+The indexer supports two approaches to event handling:
+
+### Specific Event Handling
+
+This approach allows you to explicitly define how each event should be processed:
+
+```typescript
+onEvent('ERC20:Transfer', {
+  onIndex: async (payload) => {
+    const { from, to, value } = payload.parsedEvent.args;
+
+    // Store the transfer in your database
+    await storeTransfer(from, to, value);
+  },
+});
+```
+
+### Generic Event Indexing
+
+For more automated handling, you can use a generic approach:
+
+```typescript
+// Match all Transfer events from any contract
+onEvent('*:Transfer', {
+  onIndex: async (payload) => {
+    // Generic handling code for all Transfer events
+    const { log, parsedEvent } = payload;
+    const contractAddress = log.address;
+
+    // Store event generically
+    await storeGenericEvent(
+      contractAddress,
+      parsedEvent.name,
+      parsedEvent.args,
+    );
+  },
+});
+```
+
+## Working with Event Data
+
+### Accessing Event Arguments
+
+Event arguments are available through the `parsedEvent.args` property:
+
+```typescript
+onEvent('ERC20:Transfer', {
+  onIndex: async (payload) => {
+    const { from, to, value } = payload.parsedEvent.args;
+    console.log(`Transfer: ${from} -> ${to}: ${value.toString()}`);
+  },
+});
+```
+
+### Saving to Database
+
+To save event data to the database, you'll typically use TypeORM entities:
+
+```typescript
+import { getRepository } from 'typeorm';
+import { Transfer } from './entities/Transfer.entity';
+
+onEvent('ERC20:Transfer', {
+  onIndex: async (payload) => {
+    const { from, to, value } = payload.parsedEvent.args;
+    const transferRepo = getRepository(Transfer);
+
+    // Create and save entity
+    const transfer = new Transfer();
+    transfer.from = from;
+    transfer.to = to;
+    transfer.value = value.toString();
+    transfer.blockNumber = payload.block.number;
+    transfer.timestamp = payload.block.timestamp;
+
+    await transferRepo.save(transfer);
+  },
+});
+```
+
+## Example: Monitoring ERC-20 Transfers
+
+Here's a complete example of monitoring all ERC-20 Transfer events:
+
+```typescript
+import { onEvent } from '@open-ethereum/indexer';
+import { getRepository } from 'typeorm';
+import { Transfer } from './entities/Transfer.entity';
+
+onEvent('*:Transfer', {
+  onIndex: async (payload) => {
+    const { log, parsedEvent, block } = payload;
+    const { from, to, value } = parsedEvent.args;
+
+    // Get contract name or address
+    const contractAddress = log.address;
+
+    const transferRepo = getRepository(Transfer);
+
+    const transfer = new Transfer();
+    transfer.contractAddress = contractAddress;
+    transfer.from = from;
+    transfer.to = to;
+    transfer.value = value.toString();
+    transfer.blockNumber = block.number;
+    transfer.transactionHash = log.transactionHash;
+    transfer.logIndex = log.logIndex;
+    transfer.timestamp = block.timestamp;
+
+    await transferRepo.save(transfer);
+  },
+});
+```
+
+## TODO: Converting Solidity Types to TypeORM Entities
+
+TODO

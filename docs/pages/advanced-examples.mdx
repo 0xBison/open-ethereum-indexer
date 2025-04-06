@@ -1,0 +1,136 @@
+# Advanced Examples
+
+This section will cover more advanced examples of using the Open Ethereum Indexer. These examples demonstrate how to build complex applications and address specific use cases.
+
+## Coming Soon
+
+Detailed advanced examples are currently under development. Check back soon for examples covering:
+
+- **DeFi Protocol Indexing**: How to index and monitor DeFi protocols like Uniswap or Aave
+- **NFT Collection Indexing**: Tracking NFT mints, transfers, and sales
+- **DAO Governance Indexing**: Monitoring governance proposals and votes
+- **Cross-Chain Indexing**: Working with multiple EVM chains simultaneously
+- **Custom Analytics**: Building analytics dashboards with the indexed data
+
+## Example Concepts
+
+While full examples are being developed, here are some conceptual examples:
+
+### DeFi Liquidity Pool Monitoring
+
+```typescript
+import { onEvent } from '@open-ethereum/indexer';
+import { getRepository } from 'typeorm';
+import { PoolEntity, SwapEntity } from './entities';
+
+// Monitor Uniswap V3 pool events
+onEvent('UniswapV3Pool:Swap', {
+  onIndex: async (payload) => {
+    const {
+      sender,
+      recipient,
+      amount0,
+      amount1,
+      sqrtPriceX96,
+      liquidity,
+      tick,
+    } = payload.parsedEvent.args;
+
+    // Store the swap
+    const swapRepo = getRepository(SwapEntity);
+    const swap = new SwapEntity();
+    swap.poolAddress = payload.log.address;
+    swap.sender = sender;
+    swap.recipient = recipient;
+    swap.amount0 = amount0.toString();
+    swap.amount1 = amount1.toString();
+    swap.sqrtPriceX96 = sqrtPriceX96.toString();
+    swap.liquidity = liquidity.toString();
+    swap.tick = tick;
+    swap.blockNumber = payload.block.number;
+    swap.timestamp = payload.block.timestamp;
+
+    await swapRepo.save(swap);
+
+    // Update pool state
+    const poolRepo = getRepository(PoolEntity);
+    const pool = await poolRepo.findOne({
+      where: { address: payload.log.address },
+    });
+    if (pool) {
+      pool.currentTick = tick;
+      pool.currentSqrtPriceX96 = sqrtPriceX96.toString();
+      pool.currentLiquidity = liquidity.toString();
+      pool.lastUpdateBlock = payload.block.number;
+      pool.lastUpdateTimestamp = payload.block.timestamp;
+
+      await poolRepo.save(pool);
+    }
+  },
+});
+```
+
+### NFT Collection Indexing
+
+```typescript
+import { onEvent } from '@open-ethereum/indexer';
+import { getRepository } from 'typeorm';
+import { NFT, Transfer, Collection } from './entities';
+
+// Track NFT transfers (ERC-721)
+onEvent('NFTCollection:Transfer', {
+  onIndex: async (payload) => {
+    const { from, to, tokenId } = payload.parsedEvent.args;
+    const contractAddress = payload.log.address;
+
+    // Store the transfer
+    const transferRepo = getRepository(Transfer);
+    const transfer = new Transfer();
+    transfer.contractAddress = contractAddress;
+    transfer.tokenId = tokenId.toString();
+    transfer.from = from;
+    transfer.to = to;
+    transfer.blockNumber = payload.block.number;
+    transfer.timestamp = payload.block.timestamp;
+
+    await transferRepo.save(transfer);
+
+    // Update NFT ownership
+    const nftRepo = getRepository(NFT);
+    let nft = await nftRepo.findOne({
+      where: {
+        contractAddress,
+        tokenId: tokenId.toString(),
+      },
+    });
+
+    if (!nft) {
+      nft = new NFT();
+      nft.contractAddress = contractAddress;
+      nft.tokenId = tokenId.toString();
+      nft.mintedAt = payload.block.timestamp;
+      nft.mintBlock = payload.block.number;
+    }
+
+    nft.owner = to;
+    nft.lastTransferredAt = payload.block.timestamp;
+
+    await nftRepo.save(nft);
+  },
+});
+```
+
+## Contributing Examples
+
+We welcome contributions of new examples! If you've built something interesting with the Open Ethereum Indexer, please consider contributing it to help others learn.
+
+To contribute an example:
+
+1. Fork the repository
+2. Add your example to the `examples/` directory
+3. Add documentation in the `docs/pages/advanced-examples/` directory
+4. Submit a pull request
+
+## Example Request
+
+If you need an example for a specific use case not covered here, please open an issue on GitHub describing your needs.

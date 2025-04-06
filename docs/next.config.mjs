@@ -12,4 +12,8 @@ const withNextraConfig = withNextra({
 
 export default withNextraConfig({
   reactStrictMode: true,
+  i18n: {
+    locales: ['en'],
+    defaultLocale: 'en',
+  },
 });
