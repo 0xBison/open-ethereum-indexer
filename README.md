@@ -17,9 +17,9 @@ Open Ethereum Indexer is designed to simplify the process of indexing and queryi
 - **Block Monitoring**: Track new blocks and process blockchain data in real-time
 - **Metrics & Monitoring**: Built-in Prometheus integration for monitoring system metrics
 - **RESTful API**: Query indexed data through a REST API
+- **GraphQL API**: Experimental.
 - **Reorg handling**: Coming soon
 - **Websocket API**: Coming soon
-- **GraphQL API**: Experimental.
 - **Frontend**: Coming soon
 - **Type-safe Handlers**: Coming soon
 

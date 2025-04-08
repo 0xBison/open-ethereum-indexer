@@ -19,7 +19,7 @@ The easiest way to get started is to use the [NestJS CLI](https://docs.nestjs.co
 1. Install the NestJS CLI:
 
 ```bash
-npm install -g @nestjs/cli
+pnpm install -g @nestjs/cli
 ```
 
 2. Create a new project:
@@ -33,7 +33,7 @@ nest new my-indexer
 4. Install the Open Ethereum Indexer package and typeorm
 
 ```bash
-npm install @open-ethereum/indexer typeorm
+pnpm install @open-ethereum/indexer typeorm
 ```
 
 5.
@@ -51,7 +51,6 @@ SQL_PASSWORD=your-password
 SQL_HOST=localhost
 SQL_PORT=5432
 PORT=3050
-METRICS_PORT=3051
 ```
 
 Replace the values with your specific configuration.
@@ -163,6 +162,8 @@ import './subscriptions';
 export class AppModule {}
 ```
 
+In this Module you can also add any custom modules you want to your application. You can look at the [Block Notifier example](/block-notifier) to see how a custom telegram module can be added to the indexer.
+
 ### Main Application
 
 The main file (`src/main.ts`) bootstraps your NestJS application:
@@ -215,11 +216,11 @@ To start your indexer:
 
 ```bash
 # Development mode
-npm run start:dev
+pnpm run start:dev
 
 # Production mode
-npm run build
-npm run start:prod
+pnpm run build
+pnpm run start:prod
 ```
 
 ## Creating Entities

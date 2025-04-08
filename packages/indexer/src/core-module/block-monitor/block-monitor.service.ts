@@ -158,9 +158,6 @@ export class BlockMonitorService
 
     await this.blockProcessorService.processBlockEvents(blockEvents);
 
-    // There's only one in the array anyway.
-    await this.setLatestIndexedBlock(blockEvents[0]);
-
     // Reset status if we succeeded or if any issues occurred
     this.status = SyncStatus.RUNNING;
   }
@@ -382,10 +379,12 @@ export class BlockMonitorService
   }
 
   private async setLatestBlock(block: BlockEvent) {
+    console.log('Setting latest block');
     this.cacheDatabase.set(LATEST_BLOCK, block);
   }
 
   private async setLatestIndexedBlock(block: BlockEvent) {
+    console.log('Setting latest indexed block');
     this.cacheDatabase.set(LATEST_INDEXED_BLOCK, block);
   }
 
