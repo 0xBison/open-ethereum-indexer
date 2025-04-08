@@ -1,0 +1,35 @@
+{
+    "introduction": {
+      "title": "Introduction",
+      "type": "separator"
+    },
+    "index": "Home",
+    "getting-started": "Getting Started",
+    "core-concepts": {
+      "title": "Core Concepts",
+      "type": "separator"
+    },
+    "event-listening": "Event Listening",
+    "block-monitoring": "Block Monitoring",
+    "subscriptions": "Subscriptions",
+    "entity-management": "Working with Entities",
+    "architecture": {
+      "title": "Architecture",
+      "type": "separator"
+    },
+    "configuration": "Configuration",
+    "api-reference": "API Reference",
+    "graphql": "GraphQL",
+    "metrics": "Metrics & Monitoring",
+    "examples": {
+      "title": "Examples",
+      "type": "separator"
+    },
+    "example-basic": "Basic Example",
+    "example-block-notifier": "Block Notifier",
+    "support-the-project": {
+      "title": "Support the Project",
+      "type": "separator"
+    },
+    "contributing": "Contributing"
+  }

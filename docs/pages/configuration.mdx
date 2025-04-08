@@ -1,0 +1,296 @@
+# Configuration
+
+The Open Ethereum Indexer provides a flexible configuration system that allows you to customize the behavior of your indexer. This page explains the configuration structure and available options.
+
+## Configuration Structure
+
+The indexer configuration consists of several main parts:
+
+```typescript
+interface IndexerConfig {
+  indexer: Config; // Core indexer configuration
+  database: DatabaseModuleOptions; // Database connection configuration
+  app?: {
+    // Optional application settings
+    disableRootController?: boolean;
+    disableMetrics?: boolean;
+  };
+}
+```
+
+## Core Indexer Configuration
+
+The core indexer configuration (`Config`) includes settings for blockchain connections, contract definitions, and block monitoring parameters:
+
+```typescript
+interface Config {
+  name: string; // Name of your indexer
+  chains: {
+    // Ethereum network configurations
+    [chainKey: string]: {
+      rpcUrl: string; // JSON-RPC endpoint URL
+    };
+  };
+  contracts: {
+    // Smart contract definitions
+    [contractKey: string]: {
+      address?: string; // Contract address
+      startBlock?: number; // Block to start indexing from
+      abi: any; // Contract ABI
+    };
+  };
+  blockMonitor?: {
+    // Block monitor settings
+    sleepInterval?: number; // Milliseconds between block checks
+    maxBlocksPerQuery?: number; // Max blocks to process in one batch
+  };
+}
+```
+
+## Database Configuration
+
+The database configuration defines the connection to your database:
+
+```typescript
+interface DatabaseModuleOptions {
+  type: 'postgres' | 'mysql' | 'sqlite'; // Database type
+  host?: string; // Database host
+  port?: number; // Database port
+  username?: string; // Database username
+  password?: string; // Database password
+  database: string; // Database name
+  entities?: any[]; // Entity classes
+  synchronize?: boolean; // Auto-create database schema
+  logging?: boolean | 'all' | string[]; // Logging options
+  migrations?: any[]; // Migration classes
+  migrationsRun?: boolean; // Run migrations on startup
+}
+```
+
+## Environment Variables
+
+You can use environment variables to configure your indexer. Typically, you'll define these in a `.env` file:
+
+```bash
+# API and metrics ports
+PORT=3033                  # API server port
+METRICS_PORT=3066          # Prometheus metrics port
+
+# Database config
+SQL_DB="my_indexer_db"     # PostgreSQL database name
+SQL_USERNAME="postgres"    # Database username
+SQL_PASSWORD="password"    # Database password
+SQL_HOST="localhost"       # Database host
+SQL_PORT=5432              # Database port
+SQL_SCHEMA="public"        # Database schema
+
+# Block monitor config
+SLEEP_INTERVAL=1000        # Interval between block checks (ms)
+MAX_BLOCKS_PER_QUERY=10    # Maximum blocks to process in one query
+
+# Ethereum node connection
+RPC_URL="https://eth-mainnet.alchemyapi.io/v2/your-api-key"
+```
+
+## Creating a Configuration File
+
+Here's an example of a complete configuration file:
+
+```typescript
+// indexer.config.ts
+import { IndexerConfig } from '@open-ethereum/indexer';
+import ERC20_ABI from './abis/ERC20.json';
+
+export const indexerConfig: IndexerConfig = {
+  indexer: {
+    name: 'my-erc20-indexer',
+    chains: {
+      mainnet: {
+        rpcUrl:
+          process.env.RPC_URL ||
+          'https://eth-mainnet.g.alchemy.com/v2/your-api-key',
+      },
+    },
+    contracts: {
+      DAI: {
+        address: '0x6B175474E89094C44Da98b954EedeAC495271d0F',
+        startBlock: 8928158,
+        abi: ERC20_ABI,
+      },
+      USDC: {
+        address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+        startBlock: 6082465,
+        abi: ERC20_ABI,
+      },
+    },
+    blockMonitor: {
+      sleepInterval: Number(process.env.SLEEP_INTERVAL) || 1000,
+      maxBlocksPerQuery: Number(process.env.MAX_BLOCKS_PER_QUERY) || 10,
+    },
+  },
+  database: {
+    type: 'postgres',
+    host: process.env.SQL_HOST || 'localhost',
+    port: Number(process.env.SQL_PORT) || 5432,
+    username: process.env.SQL_USERNAME || 'postgres',
+    password: process.env.SQL_PASSWORD || 'password',
+    database: process.env.SQL_DB || 'my_indexer_db',
+    synchronize: true,
+    logging: false,
+  },
+  app: {
+    disableRootController: false,
+    disableMetrics: false,
+  },
+};
+```
+
+## Using the Configuration
+
+In your application's main module, you'll use this configuration:
+
+```typescript
+// app.module.ts
+import { Module } from '@nestjs/common';
+import { IndexerModule } from '@open-ethereum/indexer';
+import { indexerConfig } from './indexer.config';
+
+@Module({
+  imports: [IndexerModule.forRoot(indexerConfig)],
+})
+export class AppModule {}
+```
+
+## Advanced Configuration Options
+
+### Disabling Controllers
+
+If you don't need the built-in REST API controllers:
+
+```typescript
+const indexerConfig: IndexerConfig = {
+  // ...other config
+  app: {
+    disableRootController: true,
+  },
+};
+```
+
+### Disabling Metrics
+
+If you don't need Prometheus metrics:
+
+```typescript
+const indexerConfig: IndexerConfig = {
+  // ...other config
+  app: {
+    disableMetrics: true,
+  },
+};
+```
+
+### Custom Database Schema
+
+For PostgreSQL users who want to use a specific schema:
+
+```typescript
+const indexerConfig: IndexerConfig = {
+  // ...other config
+  database: {
+    // ...database config
+    schema: process.env.SQL_SCHEMA || 'public',
+  },
+};
+```
+
+### Using SQLite for Development
+
+For local development, you might want to use SQLite:
+
+```typescript
+const indexerConfig: IndexerConfig = {
+  // ...other config
+  database: {
+    type: 'sqlite',
+    database: 'database.sqlite',
+    synchronize: true,
+  },
+};
+```
+
+## Environment-Specific Configuration
+
+You can create different configurations for different environments:
+
+```typescript
+// config/index.ts
+import { devConfig } from './dev.config';
+import { prodConfig } from './prod.config';
+import { testConfig } from './test.config';
+
+const env = process.env.NODE_ENV || 'development';
+
+export const indexerConfig = {
+  development: devConfig,
+  production: prodConfig,
+  test: testConfig,
+}[env];
+```
+
+## Example Configurations
+
+### Basic ERC-20 Indexer
+
+```typescript
+const indexerConfig: IndexerConfig = {
+  indexer: {
+    name: 'erc20-indexer',
+    chains: {
+      mainnet: {
+        rpcUrl: process.env.RPC_URL,
+      },
+    },
+    contracts: {
+      ERC20: {
+        abi: ERC20_ABI,
+      },
+    },
+  },
+  database: {
+    type: 'postgres',
+    host: process.env.SQL_HOST,
+    port: Number(process.env.SQL_PORT),
+    username: process.env.SQL_USERNAME,
+    password: process.env.SQL_PASSWORD,
+    database: process.env.SQL_DB,
+    synchronize: true,
+  },
+};
+```
+
+### Multi-Chain Indexer
+
+```typescript
+const indexerConfig: IndexerConfig = {
+  indexer: {
+    name: 'multi-chain-indexer',
+    chains: {
+      mainnet: {
+        rpcUrl: process.env.MAINNET_RPC_URL,
+      },
+      arbitrum: {
+        rpcUrl: process.env.ARBITRUM_RPC_URL,
+      },
+      optimism: {
+        rpcUrl: process.env.OPTIMISM_RPC_URL,
+      },
+    },
+    contracts: {
+      // Contract definitions
+    },
+  },
+  database: {
+    // Database config
+  },
+};
+```

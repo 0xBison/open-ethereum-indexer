@@ -1,0 +1,276 @@
+# GraphQL Support
+
+Open Ethereum Indexer provides built-in GraphQL support, allowing you to query your indexed data using GraphQL. This page explains how to enable and use the GraphQL API in your indexer application.
+
+## Enabling GraphQL
+
+The GraphQL module is included in the Open Ethereum Indexer but needs to be explicitly enabled in your configuration.
+
+To enable GraphQL, uncomment the GraphQL module in your indexer configuration:
+
+```typescript
+// src/indexer-module/indexer.module.ts
+@Global()
+@Module({})
+export class IndexerModule {
+  static forRoot(indexerConfig: IndexerConfig): DynamicModule {
+    return {
+      module: IndexerModule,
+      imports: [
+        LoggerModule,
+        ConfigModule.register(indexerConfig.indexer),
+        DatabaseModule.forRoot(indexerConfig.database),
+        CoreModule,
+        EthereumClientModule,
+        GenericIndexerModule.forRoot(),
+        GenericControllerModule.forEntities(),
+        GraphQLAppModule.forRoot(), // Uncomment this line
+        ...(indexerConfig.app?.disableMetrics
+          ? []
+          : [PrometheusModule.register()]),
+      ],
+      controllers: indexerConfig.app?.disableRootController
+        ? []
+        : [IndexerController],
+    };
+  }
+}
+```
+
+## Accessing the GraphQL Playground
+
+Once enabled, you can access the GraphQL playground at:
+
+```text
+http://localhost:3033/graphql
+```
+
+Replace `3033` with your configured port if different.
+
+## GraphQL Schemas for Your Entities
+
+The Open Ethereum Indexer automatically generates GraphQL schemas for your entities. For each entity, it creates:
+
+- Types representing your entity structure
+- Queries to fetch entities
+- Filters for searching and sorting
+
+For example, if you have a `Transfer` entity, the generated schema might look like:
+
+```graphql
+type Transfer {
+  id: ID!
+  contractAddress: String!
+  from: String!
+  to: String!
+  value: String!
+  blockNumber: Int!
+  transactionHash: String!
+  logIndex: Int!
+  timestamp: Int!
+}
+
+type Query {
+  transfers(
+    limit: Int
+    offset: Int
+    where: TransferWhereInput
+    orderBy: TransferOrderByInput
+  ): [Transfer!]!
+
+  transfer(id: ID!): Transfer
+}
+
+input TransferWhereInput {
+  contractAddress: String
+  from: String
+  to: String
+  blockNumber_gt: Int
+  blockNumber_lt: Int
+  # ... other filters
+}
+
+input TransferOrderByInput {
+  field: TransferOrderByField!
+  direction: OrderDirection!
+}
+
+enum TransferOrderByField {
+  id
+  blockNumber
+  timestamp
+  # ... other fields
+}
+
+enum OrderDirection {
+  ASC
+  DESC
+}
+```
+
+## Example Queries
+
+### Fetching All Transfers
+
+```graphql
+query {
+  transfers {
+    id
+    from
+    to
+    value
+    blockNumber
+    timestamp
+  }
+}
+```
+
+### Filtering Transfers
+
+```graphql
+query {
+  transfers(
+    where: { from: "0x123...", blockNumber_gt: 12000000 }
+    orderBy: { field: timestamp, direction: DESC }
+    limit: 10
+  ) {
+    id
+    from
+    to
+    value
+    blockNumber
+    timestamp
+  }
+}
+```
+
+### Fetching a Single Transfer
+
+```graphql
+query {
+  transfer(id: "123") {
+    from
+    to
+    value
+    blockNumber
+    timestamp
+  }
+}
+```
+
+## Creating Custom Resolvers
+
+You can create custom GraphQL resolvers to extend the automatically generated ones:
+
+```typescript
+// src/resolvers/transfer.resolver.ts
+import { Args, Query, Resolver } from '@nestjs/graphql';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Transfer } from '../entities/Transfer.entity';
+
+@Resolver('Transfer')
+export class TransferResolver {
+  constructor(
+    @InjectRepository(Transfer)
+    private transferRepository: Repository<Transfer>,
+  ) {}
+
+  @Query('largeTransfers')
+  async getLargeTransfers(
+    @Args('minValue') minValue: string,
+    @Args('limit') limit: number = 10,
+  ) {
+    return this.transferRepository.find({
+      where: {
+        // Use a condition to compare string values as numbers
+        // This is a simplification - you'd need proper BigInt handling
+        value: () => `value::numeric >= ${minValue}::numeric`,
+      },
+      order: {
+        value: 'DESC',
+      },
+      take: limit,
+    });
+  }
+}
+```
+
+Then add your custom resolver to a module:
+
+```typescript
+// src/graphql.module.ts
+import { Module } from '@nestjs/common';
+import { GraphQLModule } from '@nestjs/graphql';
+import { TransferResolver } from './resolvers/transfer.resolver';
+
+@Module({
+  imports: [
+    GraphQLModule.forRoot({
+      autoSchemaFile: 'schema.gql',
+      playground: true,
+    }),
+  ],
+  providers: [TransferResolver],
+})
+export class GraphQlModule {}
+```
+
+## GraphQL for Complex Relationships
+
+GraphQL is particularly useful for querying complex entity relationships:
+
+```graphql
+query {
+  tokens {
+    address
+    name
+    symbol
+    decimals
+    transfers(limit: 5) {
+      from
+      to
+      value
+      timestamp
+    }
+  }
+}
+```
+
+## Performance Considerations
+
+GraphQL can potentially lead to performance issues with complex nested queries. To optimize performance:
+
+1. Use pagination for large result sets
+2. Consider adding dataloader for batching database queries
+3. Implement query complexity analysis to prevent overly complex queries
+4. Add caching for frequently accessed data
+
+## GraphQL with Custom APIs
+
+If you're building custom APIs in addition to the automatic GraphQL API, you can integrate them:
+
+```typescript
+// src/app.module.ts
+import { Module } from '@nestjs/common';
+import { IndexerModule } from '@open-ethereum/indexer';
+import { GraphQLModule } from '@nestjs/graphql';
+import { CustomApiModule } from './custom-api/custom-api.module';
+import { indexerConfig } from './indexer.config';
+
+@Module({
+  imports: [
+    IndexerModule.forRoot(indexerConfig),
+    GraphQLModule.forRoot({
+      autoSchemaFile: 'schema.gql',
+      playground: true,
+    }),
+    CustomApiModule,
+  ],
+})
+export class AppModule {}
+```
+
+## TODO: Advanced GraphQL Features
+
+TODO

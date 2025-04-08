@@ -1,0 +1,264 @@
+# Basic Example
+
+This guide walks through a simple example of using the Open Ethereum Indexer to monitor blockchain events and blocks. The basic example provides a foundation for understanding the core concepts of the indexer.
+
+## Project Structure
+
+The basic example has the following structure:
+
+```
+basic-example/
+├── src/
+│   ├── app.module.ts         # Main application module
+│   ├── indexer.config.ts     # Indexer configuration
+│   ├── main.ts               # Application entry point
+│   └── subscriptions.ts      # Event and block subscriptions
+├── package.json
+└── .env                      # Environment variables
+```
+
+## Configuration
+
+First, let's look at the indexer configuration:
+
+```typescript
+// src/indexer.config.ts
+import { IndexerConfig } from '@open-ethereum/indexer';
+
+export const indexerConfig: IndexerConfig = {
+  indexer: {
+    name: 'basic-example',
+    chains: {
+      mainnet: {
+        rpcUrl:
+          process.env.RPC_URL ||
+          'https://eth-mainnet.g.alchemy.com/v2/your-api-key',
+      },
+    },
+    contracts: {
+      // No specific contracts defined for this basic example
+    },
+    blockMonitor: {
+      sleepInterval: Number(process.env.SLEEP_INTERVAL) || 1000,
+      maxBlocksPerQuery: Number(process.env.MAX_BLOCKS_PER_QUERY) || 10,
+    },
+  },
+  database: {
+    type: 'postgres',
+    host: process.env.SQL_HOST || 'localhost',
+    port: Number(process.env.SQL_PORT) || 5432,
+    username: process.env.SQL_USERNAME || 'postgres',
+    password: process.env.SQL_PASSWORD || 'password',
+    database: process.env.SQL_DB || 'basic_example',
+    synchronize: true,
+    logging: false,
+  },
+};
+```
+
+## Application Module
+
+The application module integrates the indexer into your NestJS application:
+
+```typescript
+// src/app.module.ts
+import { Module } from '@nestjs/common';
+import { IndexerModule } from '@open-ethereum/indexer';
+import { indexerConfig } from './indexer.config';
+import './subscriptions';
+
+@Module({
+  imports: [IndexerModule.forRoot(indexerConfig)],
+})
+export class AppModule {}
+```
+
+## Event and Block Subscriptions
+
+The subscriptions file defines handlers for blockchain events and blocks:
+
+```typescript
+// src/subscriptions.ts
+import { onEvent, onBlock } from '@open-ethereum/indexer';
+
+// Listen for all events from all contracts
+onEvent('*:*', {
+  onIndex: async (payload) => {
+    console.log('ON EVENT');
+    // Here you would process the event data
+    // For example, storing it in a database
+  },
+});
+
+// Listen for all new blocks
+onBlock({
+  onIndex: async (payload) => {
+    console.log('ON BLOCK');
+    // Here you would process the block data
+    // For example, tracking the latest block number
+  },
+});
+```
+
+## Main Application
+
+The application entry point bootstraps the NestJS application:
+
+```typescript
+// src/main.ts
+import { NestFactory } from '@nestjs/core';
+import { setupSwagger } from '@open-ethereum/indexer';
+import { PrometheusModule } from '@willsoto/nestjs-prometheus';
+import { Logger } from '@nestjs/common';
+import { AppModule } from './app.module';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true,
+  });
+
+  // Create a separate app for metrics
+  const metricsApp = await NestFactory.create(
+    PrometheusModule.register({ path: '/metrics' }),
+  );
+
+  // Get the logger
+  const logger = app.get(Logger);
+  app.useLogger(logger);
+
+  // Setup Swagger API documentation
+  setupSwagger(app);
+
+  // Start the main application
+  const port = process.env.PORT ?? 3050;
+  await app.listen(port);
+
+  // Start the metrics server
+  const metricsPort = process.env.METRICS_PORT ?? 3051;
+  await metricsApp.listen(metricsPort);
+
+  logger.log(`Application started on port ${port}`);
+  logger.log(`Swagger documentation available at http://localhost:${port}/api`);
+}
+bootstrap();
+```
+
+## Running the Example
+
+To run the basic example:
+
+1. Ensure you have PostgreSQL running
+2. Create a `.env` file with your configuration:
+
+```
+RPC_URL=https://eth-mainnet.g.alchemy.com/v2/your-api-key
+SQL_DB=basic_example
+SQL_USERNAME=postgres
+SQL_PASSWORD=your-password
+SQL_HOST=localhost
+SQL_PORT=5432
+PORT=3050
+METRICS_PORT=3051
+```
+
+3. Install dependencies:
+
+```bash
+npm install
+```
+
+4. Start the indexer:
+
+```bash
+npm run start:dev
+```
+
+## What's Happening
+
+Once the application is running:
+
+1. The block monitor will start fetching the latest blocks from the Ethereum blockchain
+2. For each block, the `onBlock` handler in `subscriptions.ts` will be called
+3. For any events in those blocks, the `onEvent` handler will be called
+4. You can access the built-in API at `http://localhost:3050/api`
+5. You can view metrics at `http://localhost:3051/metrics`
+
+## Extending the Example
+
+This basic example can be extended in several ways:
+
+### Adding Specific Contract Monitoring
+
+```typescript
+// Add to indexer.config.ts
+contracts: {
+  DAI: {
+    address: '0x6B175474E89094C44Da98b954EedeAC495271d0F',
+    startBlock: 8928158,
+    abi: DAI_ABI, // Import the ABI
+  },
+}
+
+// Update subscriptions.ts
+onEvent('DAI:Transfer', {
+  onIndex: async (payload) => {
+    console.log('DAI Transfer:', payload.parsedEvent.args);
+  },
+});
+```
+
+### Adding Database Entities
+
+```typescript
+// Create entities/Transfer.entity.ts
+import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+
+@Entity()
+export class Transfer {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column()
+  from: string;
+
+  @Column()
+  to: string;
+
+  @Column('varchar')
+  value: string;
+
+  @Column('int')
+  blockNumber: number;
+}
+
+// Add to indexer.config.ts database options
+entities: [Transfer],
+
+// Update subscriptions.ts
+import { getRepository } from 'typeorm';
+import { Transfer } from './entities/Transfer.entity';
+
+onEvent('*:Transfer', {
+  onIndex: async (payload) => {
+    const { from, to, value } = payload.parsedEvent.args;
+    const transferRepo = getRepository(Transfer);
+
+    const transfer = new Transfer();
+    transfer.from = from;
+    transfer.to = to;
+    transfer.value = value.toString();
+    transfer.blockNumber = payload.block.number;
+
+    await transferRepo.save(transfer);
+  },
+});
+```
+
+## Next Steps
+
+After understanding this basic example, you might want to explore:
+
+- The [Block Notifier Example](/block-notifier) for a more practical application
+- How to use [GraphQL](/graphql) to query your indexed data
+- Working with [Entity Management](/entity-management) for storing complex data
+- Setting up [Subscriptions](/subscriptions) with dependency injection

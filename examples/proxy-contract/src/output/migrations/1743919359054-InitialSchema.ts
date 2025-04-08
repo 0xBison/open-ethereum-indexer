@@ -1,0 +1,97 @@
+
+import { MigrationInterface, QueryRunner } from "typeorm";
+
+export class InitialSchema1743919359054 implements MigrationInterface {
+  name = 'InitialSchema1743919359054';
+
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    // Create schema if it doesn't exist
+    await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS ${process.env.SQL_SCHEMA}`);
+    
+    await queryRunner.query(`CREATE TABLE ${process.env.SQL_SCHEMA}."action_paused_87ed0813" ("unique_event_id" character varying(64) NOT NULL, "event_origin_address" character varying(66) NOT NULL, "created_date" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "tx_index" numeric(5) NOT NULL, "log_index" numeric(5) NOT NULL, "log_data" character varying NOT NULL, "block_hash" character varying(66) NOT NULL, "block_number" bigint NOT NULL, "block_timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "transaction_hash" character varying(66) NOT NULL, "topics" character varying array NOT NULL, "action" character varying NOT NULL, "pause_state" boolean NOT NULL, CONSTRAINT "PK_7c4a71d0b0c5e911affac8ea696" PRIMARY KEY ("unique_event_id"))`);
+
+    await queryRunner.query(`CREATE TABLE ${process.env.SQL_SCHEMA}."action_paused_ceb8c813" ("unique_event_id" character varying(64) NOT NULL, "event_origin_address" character varying(66) NOT NULL, "created_date" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "tx_index" numeric(5) NOT NULL, "log_index" numeric(5) NOT NULL, "log_data" character varying NOT NULL, "block_hash" character varying(66) NOT NULL, "block_number" bigint NOT NULL, "block_timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "transaction_hash" character varying(66) NOT NULL, "topics" character varying array NOT NULL, "c_token" character varying(66) NOT NULL, "action" character varying NOT NULL, "pause_state" boolean NOT NULL, CONSTRAINT "PK_d6edb1dd9a3215d736202dd35e6" PRIMARY KEY ("unique_event_id"))`);
+
+    await queryRunner.query(`CREATE TABLE ${process.env.SQL_SCHEMA}."comp_accrued_adjusted_5ce616a2" ("unique_event_id" character varying(64) NOT NULL, "event_origin_address" character varying(66) NOT NULL, "created_date" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "tx_index" numeric(5) NOT NULL, "log_index" numeric(5) NOT NULL, "log_data" character varying NOT NULL, "block_hash" character varying(66) NOT NULL, "block_number" bigint NOT NULL, "block_timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "transaction_hash" character varying(66) NOT NULL, "topics" character varying array NOT NULL, "user" character varying(66) NOT NULL, "old_comp_accrued" numeric(78) NOT NULL, "new_comp_accrued" numeric(78) NOT NULL, CONSTRAINT "PK_6ccbef551a4651dcd1f8532947f" PRIMARY KEY ("unique_event_id"))`);
+
+    await queryRunner.query(`CREATE TABLE ${process.env.SQL_SCHEMA}."comp_borrow_speed_updated_6a38bf23" ("unique_event_id" character varying(64) NOT NULL, "event_origin_address" character varying(66) NOT NULL, "created_date" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "tx_index" numeric(5) NOT NULL, "log_index" numeric(5) NOT NULL, "log_data" character varying NOT NULL, "block_hash" character varying(66) NOT NULL, "block_number" bigint NOT NULL, "block_timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "transaction_hash" character varying(66) NOT NULL, "topics" character varying array NOT NULL, "c_token" character varying(66) NOT NULL, "new_speed" numeric(78) NOT NULL, CONSTRAINT "PK_70abfaef51e33c5e70f634899f7" PRIMARY KEY ("unique_event_id"))`);
+
+    await queryRunner.query(`CREATE TABLE ${process.env.SQL_SCHEMA}."comp_granted_caa9faec" ("unique_event_id" character varying(64) NOT NULL, "event_origin_address" character varying(66) NOT NULL, "created_date" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "tx_index" numeric(5) NOT NULL, "log_index" numeric(5) NOT NULL, "log_data" character varying NOT NULL, "block_hash" character varying(66) NOT NULL, "block_number" bigint NOT NULL, "block_timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "transaction_hash" character varying(66) NOT NULL, "topics" character varying array NOT NULL, "recipient" character varying(66) NOT NULL, "amount" numeric(78) NOT NULL, CONSTRAINT "PK_e0594aa7a8a10627cf3093a0ba0" PRIMARY KEY ("unique_event_id"))`);
+
+    await queryRunner.query(`CREATE TABLE ${process.env.SQL_SCHEMA}."comp_receivable_updated_f1f7e013" ("unique_event_id" character varying(64) NOT NULL, "event_origin_address" character varying(66) NOT NULL, "created_date" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "tx_index" numeric(5) NOT NULL, "log_index" numeric(5) NOT NULL, "log_data" character varying NOT NULL, "block_hash" character varying(66) NOT NULL, "block_number" bigint NOT NULL, "block_timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "transaction_hash" character varying(66) NOT NULL, "topics" character varying array NOT NULL, "user" character varying(66) NOT NULL, "old_comp_receivable" numeric(78) NOT NULL, "new_comp_receivable" numeric(78) NOT NULL, CONSTRAINT "PK_db8fa0a65f5fd8a1e374326be70" PRIMARY KEY ("unique_event_id"))`);
+
+    await queryRunner.query(`CREATE TABLE ${process.env.SQL_SCHEMA}."comp_supply_speed_updated_2f7a8824" ("unique_event_id" character varying(64) NOT NULL, "event_origin_address" character varying(66) NOT NULL, "created_date" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "tx_index" numeric(5) NOT NULL, "log_index" numeric(5) NOT NULL, "log_data" character varying NOT NULL, "block_hash" character varying(66) NOT NULL, "block_number" bigint NOT NULL, "block_timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "transaction_hash" character varying(66) NOT NULL, "topics" character varying array NOT NULL, "c_token" character varying(66) NOT NULL, "new_speed" numeric(78) NOT NULL, CONSTRAINT "PK_e7c441b74cca6bf3187559dcd07" PRIMARY KEY ("unique_event_id"))`);
+
+    await queryRunner.query(`CREATE TABLE ${process.env.SQL_SCHEMA}."contributor_comp_speed_updated_14694123" ("unique_event_id" character varying(64) NOT NULL, "event_origin_address" character varying(66) NOT NULL, "created_date" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "tx_index" numeric(5) NOT NULL, "log_index" numeric(5) NOT NULL, "log_data" character varying NOT NULL, "block_hash" character varying(66) NOT NULL, "block_number" bigint NOT NULL, "block_timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "transaction_hash" character varying(66) NOT NULL, "topics" character varying array NOT NULL, "contributor" character varying(66) NOT NULL, "new_speed" numeric(78) NOT NULL, CONSTRAINT "PK_fcf6c28f4bbc1b7e334e199bb63" PRIMARY KEY ("unique_event_id"))`);
+
+    await queryRunner.query(`CREATE TABLE ${process.env.SQL_SCHEMA}."distributed_borrower_comp_8bcf5026" ("unique_event_id" character varying(64) NOT NULL, "event_origin_address" character varying(66) NOT NULL, "created_date" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "tx_index" numeric(5) NOT NULL, "log_index" numeric(5) NOT NULL, "log_data" character varying NOT NULL, "block_hash" character varying(66) NOT NULL, "block_number" bigint NOT NULL, "block_timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "transaction_hash" character varying(66) NOT NULL, "topics" character varying array NOT NULL, "c_token" character varying(66) NOT NULL, "borrower" character varying(66) NOT NULL, "comp_delta" numeric(78) NOT NULL, "comp_borrow_index" numeric(78) NOT NULL, CONSTRAINT "PK_3019cb2b33ec8606d96e87f9d48" PRIMARY KEY ("unique_event_id"))`);
+
+    await queryRunner.query(`CREATE TABLE ${process.env.SQL_SCHEMA}."distributed_supplier_comp_2de01bb4" ("unique_event_id" character varying(64) NOT NULL, "event_origin_address" character varying(66) NOT NULL, "created_date" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "tx_index" numeric(5) NOT NULL, "log_index" numeric(5) NOT NULL, "log_data" character varying NOT NULL, "block_hash" character varying(66) NOT NULL, "block_number" bigint NOT NULL, "block_timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "transaction_hash" character varying(66) NOT NULL, "topics" character varying array NOT NULL, "c_token" character varying(66) NOT NULL, "supplier" character varying(66) NOT NULL, "comp_delta" numeric(78) NOT NULL, "comp_supply_index" numeric(78) NOT NULL, CONSTRAINT "PK_9989314b07e55ded3ec5b6d960b" PRIMARY KEY ("unique_event_id"))`);
+
+    await queryRunner.query(`CREATE TABLE ${process.env.SQL_SCHEMA}."failure_e5abfb3f" ("unique_event_id" character varying(64) NOT NULL, "event_origin_address" character varying(66) NOT NULL, "created_date" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "tx_index" numeric(5) NOT NULL, "log_index" numeric(5) NOT NULL, "log_data" character varying NOT NULL, "block_hash" character varying(66) NOT NULL, "block_number" bigint NOT NULL, "block_timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "transaction_hash" character varying(66) NOT NULL, "topics" character varying array NOT NULL, "error" numeric(78) NOT NULL, "info" numeric(78) NOT NULL, "detail" numeric(78) NOT NULL, CONSTRAINT "PK_1693a5aeacf4e6d0401b128763d" PRIMARY KEY ("unique_event_id"))`);
+
+    await queryRunner.query(`CREATE TABLE ${process.env.SQL_SCHEMA}."market_exited_3bdeca10" ("unique_event_id" character varying(64) NOT NULL, "event_origin_address" character varying(66) NOT NULL, "created_date" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "tx_index" numeric(5) NOT NULL, "log_index" numeric(5) NOT NULL, "log_data" character varying NOT NULL, "block_hash" character varying(66) NOT NULL, "block_number" bigint NOT NULL, "block_timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "transaction_hash" character varying(66) NOT NULL, "topics" character varying array NOT NULL, "c_token" character varying(66) NOT NULL, "account" character varying(66) NOT NULL, CONSTRAINT "PK_ea85952bffea0804368d781dff6" PRIMARY KEY ("unique_event_id"))`);
+
+    await queryRunner.query(`CREATE TABLE ${process.env.SQL_SCHEMA}."market_entered_cbd709c9" ("unique_event_id" character varying(64) NOT NULL, "event_origin_address" character varying(66) NOT NULL, "created_date" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "tx_index" numeric(5) NOT NULL, "log_index" numeric(5) NOT NULL, "log_data" character varying NOT NULL, "block_hash" character varying(66) NOT NULL, "block_number" bigint NOT NULL, "block_timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "transaction_hash" character varying(66) NOT NULL, "topics" character varying array NOT NULL, "c_token" character varying(66) NOT NULL, "account" character varying(66) NOT NULL, CONSTRAINT "PK_f26b47175a9d38940831909f836" PRIMARY KEY ("unique_event_id"))`);
+
+    await queryRunner.query(`CREATE TABLE ${process.env.SQL_SCHEMA}."market_listed_819aef69" ("unique_event_id" character varying(64) NOT NULL, "event_origin_address" character varying(66) NOT NULL, "created_date" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "tx_index" numeric(5) NOT NULL, "log_index" numeric(5) NOT NULL, "log_data" character varying NOT NULL, "block_hash" character varying(66) NOT NULL, "block_number" bigint NOT NULL, "block_timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "transaction_hash" character varying(66) NOT NULL, "topics" character varying array NOT NULL, "c_token" character varying(66) NOT NULL, CONSTRAINT "PK_9016cdcd52f3715e33373de0545" PRIMARY KEY ("unique_event_id"))`);
+
+    await queryRunner.query(`CREATE TABLE ${process.env.SQL_SCHEMA}."new_borrow_cap_04e22ec6" ("unique_event_id" character varying(64) NOT NULL, "event_origin_address" character varying(66) NOT NULL, "created_date" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "tx_index" numeric(5) NOT NULL, "log_index" numeric(5) NOT NULL, "log_data" character varying NOT NULL, "block_hash" character varying(66) NOT NULL, "block_number" bigint NOT NULL, "block_timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "transaction_hash" character varying(66) NOT NULL, "topics" character varying array NOT NULL, "c_token" character varying(66) NOT NULL, "new_borrow_cap" numeric(78) NOT NULL, CONSTRAINT "PK_612891c6c522052a5b96488a399" PRIMARY KEY ("unique_event_id"))`);
+
+    await queryRunner.query(`CREATE TABLE ${process.env.SQL_SCHEMA}."new_borrow_cap_guardian_e7776ba7" ("unique_event_id" character varying(64) NOT NULL, "event_origin_address" character varying(66) NOT NULL, "created_date" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "tx_index" numeric(5) NOT NULL, "log_index" numeric(5) NOT NULL, "log_data" character varying NOT NULL, "block_hash" character varying(66) NOT NULL, "block_number" bigint NOT NULL, "block_timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "transaction_hash" character varying(66) NOT NULL, "topics" character varying array NOT NULL, "old_borrow_cap_guardian" character varying(66) NOT NULL, "new_borrow_cap_guardian" character varying(66) NOT NULL, CONSTRAINT "PK_9c936f2330b8b7aae4b1917a4d4" PRIMARY KEY ("unique_event_id"))`);
+
+    await queryRunner.query(`CREATE TABLE ${process.env.SQL_SCHEMA}."new_close_factor_187cb1f6" ("unique_event_id" character varying(64) NOT NULL, "event_origin_address" character varying(66) NOT NULL, "created_date" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "tx_index" numeric(5) NOT NULL, "log_index" numeric(5) NOT NULL, "log_data" character varying NOT NULL, "block_hash" character varying(66) NOT NULL, "block_number" bigint NOT NULL, "block_timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "transaction_hash" character varying(66) NOT NULL, "topics" character varying array NOT NULL, "old_close_factor_mantissa" numeric(78) NOT NULL, "new_close_factor_mantissa" numeric(78) NOT NULL, CONSTRAINT "PK_e852cbd34de98ef925b86ef08c4" PRIMARY KEY ("unique_event_id"))`);
+
+    await queryRunner.query(`CREATE TABLE ${process.env.SQL_SCHEMA}."new_liquidation_incentive_0f450502" ("unique_event_id" character varying(64) NOT NULL, "event_origin_address" character varying(66) NOT NULL, "created_date" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "tx_index" numeric(5) NOT NULL, "log_index" numeric(5) NOT NULL, "log_data" character varying NOT NULL, "block_hash" character varying(66) NOT NULL, "block_number" bigint NOT NULL, "block_timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "transaction_hash" character varying(66) NOT NULL, "topics" character varying array NOT NULL, "old_liquidation_incentive_mantissa" numeric(78) NOT NULL, "new_liquidation_incentive_mantissa" numeric(78) NOT NULL, CONSTRAINT "PK_a050da6133afb7f7860eb37bc84" PRIMARY KEY ("unique_event_id"))`);
+
+    await queryRunner.query(`CREATE TABLE ${process.env.SQL_SCHEMA}."new_pause_guardian_a15b5c9d" ("unique_event_id" character varying(64) NOT NULL, "event_origin_address" character varying(66) NOT NULL, "created_date" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "tx_index" numeric(5) NOT NULL, "log_index" numeric(5) NOT NULL, "log_data" character varying NOT NULL, "block_hash" character varying(66) NOT NULL, "block_number" bigint NOT NULL, "block_timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "transaction_hash" character varying(66) NOT NULL, "topics" character varying array NOT NULL, "old_pause_guardian" character varying(66) NOT NULL, "new_pause_guardian" character varying(66) NOT NULL, CONSTRAINT "PK_15da3419cd05c7dee2e69798079" PRIMARY KEY ("unique_event_id"))`);
+
+    await queryRunner.query(`CREATE TABLE ${process.env.SQL_SCHEMA}."new_price_oracle_fbac889f" ("unique_event_id" character varying(64) NOT NULL, "event_origin_address" character varying(66) NOT NULL, "created_date" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "tx_index" numeric(5) NOT NULL, "log_index" numeric(5) NOT NULL, "log_data" character varying NOT NULL, "block_hash" character varying(66) NOT NULL, "block_number" bigint NOT NULL, "block_timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "transaction_hash" character varying(66) NOT NULL, "topics" character varying array NOT NULL, "old_price_oracle" character varying(66) NOT NULL, "new_price_oracle" character varying(66) NOT NULL, CONSTRAINT "PK_f911d88dc63adc57f544eee0d06" PRIMARY KEY ("unique_event_id"))`);
+
+    await queryRunner.query(`CREATE TABLE ${process.env.SQL_SCHEMA}."new_collateral_factor_2e017433" ("unique_event_id" character varying(64) NOT NULL, "event_origin_address" character varying(66) NOT NULL, "created_date" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "tx_index" numeric(5) NOT NULL, "log_index" numeric(5) NOT NULL, "log_data" character varying NOT NULL, "block_hash" character varying(66) NOT NULL, "block_number" bigint NOT NULL, "block_timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "transaction_hash" character varying(66) NOT NULL, "topics" character varying array NOT NULL, "c_token" character varying(66) NOT NULL, "old_collateral_factor_mantissa" numeric(78) NOT NULL, "new_collateral_factor_mantissa" numeric(78) NOT NULL, CONSTRAINT "PK_0ad3440aeada1206dd16d29c4e5" PRIMARY KEY ("unique_event_id"))`);
+  }
+
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`DROP TABLE IF EXISTS ${process.env.SQL_SCHEMA} CASCADE."action_paused_87ed0813"`);
+
+    await queryRunner.query(`DROP TABLE IF EXISTS ${process.env.SQL_SCHEMA} CASCADE."action_paused_ceb8c813"`);
+
+    await queryRunner.query(`DROP TABLE IF EXISTS ${process.env.SQL_SCHEMA} CASCADE."comp_accrued_adjusted_5ce616a2"`);
+
+    await queryRunner.query(`DROP TABLE IF EXISTS ${process.env.SQL_SCHEMA} CASCADE."comp_borrow_speed_updated_6a38bf23"`);
+
+    await queryRunner.query(`DROP TABLE IF EXISTS ${process.env.SQL_SCHEMA} CASCADE."comp_granted_caa9faec"`);
+
+    await queryRunner.query(`DROP TABLE IF EXISTS ${process.env.SQL_SCHEMA} CASCADE."comp_receivable_updated_f1f7e013"`);
+
+    await queryRunner.query(`DROP TABLE IF EXISTS ${process.env.SQL_SCHEMA} CASCADE."comp_supply_speed_updated_2f7a8824"`);
+
+    await queryRunner.query(`DROP TABLE IF EXISTS ${process.env.SQL_SCHEMA} CASCADE."contributor_comp_speed_updated_14694123"`);
+
+    await queryRunner.query(`DROP TABLE IF EXISTS ${process.env.SQL_SCHEMA} CASCADE."distributed_borrower_comp_8bcf5026"`);
+
+    await queryRunner.query(`DROP TABLE IF EXISTS ${process.env.SQL_SCHEMA} CASCADE."distributed_supplier_comp_2de01bb4"`);
+
+    await queryRunner.query(`DROP TABLE IF EXISTS ${process.env.SQL_SCHEMA} CASCADE."failure_e5abfb3f"`);
+
+    await queryRunner.query(`DROP TABLE IF EXISTS ${process.env.SQL_SCHEMA} CASCADE."market_exited_3bdeca10"`);
+
+    await queryRunner.query(`DROP TABLE IF EXISTS ${process.env.SQL_SCHEMA} CASCADE."market_entered_cbd709c9"`);
+
+    await queryRunner.query(`DROP TABLE IF EXISTS ${process.env.SQL_SCHEMA} CASCADE."market_listed_819aef69"`);
+
+    await queryRunner.query(`DROP TABLE IF EXISTS ${process.env.SQL_SCHEMA} CASCADE."new_borrow_cap_04e22ec6"`);
+
+    await queryRunner.query(`DROP TABLE IF EXISTS ${process.env.SQL_SCHEMA} CASCADE."new_borrow_cap_guardian_e7776ba7"`);
+
+    await queryRunner.query(`DROP TABLE IF EXISTS ${process.env.SQL_SCHEMA} CASCADE."new_close_factor_187cb1f6"`);
+
+    await queryRunner.query(`DROP TABLE IF EXISTS ${process.env.SQL_SCHEMA} CASCADE."new_liquidation_incentive_0f450502"`);
+
+    await queryRunner.query(`DROP TABLE IF EXISTS ${process.env.SQL_SCHEMA} CASCADE."new_pause_guardian_a15b5c9d"`);
+
+    await queryRunner.query(`DROP TABLE IF EXISTS ${process.env.SQL_SCHEMA} CASCADE."new_price_oracle_fbac889f"`);
+
+    await queryRunner.query(`DROP TABLE IF EXISTS ${process.env.SQL_SCHEMA} CASCADE."new_collateral_factor_2e017433"`);
+  }
+}

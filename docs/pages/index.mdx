@@ -1,0 +1,42 @@
+# Open Ethereum Indexer
+
+Open Ethereum Indexer is a flexible and modular blockchain indexing service that allows you to index, query, and monitor Ethereum (or any other EVM-compatible chain) blockchain data. It provides a modular architecture for building applications that need to track and/or index blockchain events and transactions.
+
+It is designed to allow you to quickly build a custom blockchain monitoring solution with support for indexing without having to worry about the technical details of blockchain monitoring and indexing.
+
+## Why Use Open Ethereum Indexer?
+
+Building blockchain applications often requires tracking on-chain events and state changes. Open Ethereum Indexer provides:
+
+- A ready-to-use infrastructure for monitoring blockchain activity
+- Real-time blockchain event tracking and backfilling from a historical block
+- Postgres database for storing indexed data
+- Customizable event and block handlers
+- Optional API and GraphQL endpoints for querying indexed data
+- Modular architecture for easy extension and customization
+- Support for any network (including custom networks) that conforms to the [Ethereum JSON RPC Specification](https://ethereum.org/en/developers/docs/apis/json-rpc/)
+- Monitoring and metrics with Prometheus
+
+## Technical Architecture
+
+Open Ethereum Indexer is built on [NestJS](https://nestjs.com/), providing a dependency-injected application that's easy to extend. It connects to an Ethereum node via JSON-RPC and processes blocks and events as they occur on the blockchain.
+
+Data is stored in PostgreSQL, allowing for efficient querying and retrieval of indexed information. The app uses [TypeORM](https://typeorm.io/) to interact with the database which should be used for any database operations inside event handlers too.
+
+## Use Cases
+
+Open Ethereum Indexer is ideal for:
+
+- DeFi applications that need to track token swaps, deposits, or other financial events
+- NFT marketplaces requiring indexing of transfers and sales
+- DAOs that want to monitor governance events
+- Applications that want to be notified if on-chain events meeting specific criteria occur
+- Any application that needs to store, query and analyze on-chain data
+
+## Getting Started
+
+Check out the [Getting Started](/getting-started) guide to get started with Open Ethereum Indexer and see the examples.
+
+## Contributing
+
+We welcome contributions! Please see our [Contributing Guide](/contributing) for details.

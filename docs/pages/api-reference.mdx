@@ -1,0 +1,354 @@
+# API Reference
+
+The Open Ethereum Indexer provides a built-in REST API for accessing indexed blockchain data. This page documents the available endpoints and how to use them.
+
+## API Overview
+
+By default, the indexer exposes several REST API endpoints:
+
+- Block-related endpoints for querying indexed blocks
+- Entity-specific endpoints that are automatically generated for your entities
+- Status and health check endpoints
+
+All API endpoints are documented with Swagger, which you can access at:
+
+```text
+http://localhost:3033/api-docs
+```
+
+Replace `3033` with your configured port if different.
+
+## Block API
+
+The Block API provides endpoints for querying indexed blocks:
+
+### Get Blocks
+
+Retrieve blocks within a specified range.
+
+```text
+GET /blocks
+```
+
+**Query Parameters:**
+
+- `from` (optional): Starting block number
+- `to` (optional): Ending block number
+- `limit` (optional): Maximum number of blocks to return (default: 1000)
+
+**Example Response:**
+
+```json
+[
+  {
+    "number": 16000000,
+    "hash": "0xa1d22e577e06e9b53cb3608ef1de891563f35a0a2c15500a9e72f58b31a75cd3",
+    "parentHash": "0x74a3be3e850aa85efb416e1b4aeb9ea3fbae850cd4b2cc5ebba40c4ffce44fe9",
+    "timestamp": 1655947004
+  },
+  {
+    "number": 16000001,
+    "hash": "0x2349b47fee12b1cfc872ca61057816155149f5b0d51174bdaa388cfcab5e5aa7",
+    "parentHash": "0xa1d22e577e06e9b53cb3608ef1de891563f35a0a2c15500a9e72f58b31a75cd3",
+    "timestamp": 1655947016
+  }
+]
+```
+
+### Get Recent Blocks
+
+Retrieve the most recent blocks.
+
+```text
+GET /blocks/recent
+```
+
+**Query Parameters:**
+
+- `limit` (optional): Maximum number of blocks to return (default: 1000)
+
+**Example Response:**
+Same as the Get Blocks endpoint, but returning the most recent blocks.
+
+## Entity APIs
+
+For each entity you define, the indexer automatically generates RESTful endpoints:
+
+### List Entities
+
+Retrieve a list of entities with pagination and filtering.
+
+```text
+GET /api/{entityName}
+```
+
+**Query Parameters:**
+
+- `limit` (optional): Maximum number of entities to return (default: 10)
+- `offset` (optional): Number of entities to skip (for pagination)
+- `orderBy` (optional): Field to order by
+- `orderDirection` (optional): `ASC` or `DESC`
+
+**Example:**
+
+```text
+GET /api/transfers?limit=5&orderBy=blockNumber&orderDirection=DESC
+```
+
+### Get Entity by ID
+
+Retrieve a specific entity by its ID.
+
+```text
+GET /api/{entityName}/{id}
+```
+
+**Example:**
+
+```text
+GET /api/transfers/123
+```
+
+### Advanced Filtering
+
+The entity API supports advanced filtering through query parameters:
+
+```text
+GET /api/{entityName}?field=value&field_gt=value&field_lt=value
+```
+
+**Supported Filter Operators:**
+
+- Exact match: `field=value`
+- Greater than: `field_gt=value`
+- Less than: `field_lt=value`
+- Greater than or equal: `field_gte=value`
+- Less than or equal: `field_lte=value`
+- Not equal: `field_ne=value`
+- Like (substring): `field_like=value`
+
+**Example:**
+
+```text
+GET /api/transfers?from=0x123...&blockNumber_gt=16000000
+```
+
+## Custom API Controllers
+
+You can extend the API with your own custom controllers:
+
+```typescript
+// src/controllers/custom.controller.ts
+import { Controller, Get, Query } from '@nestjs/common';
+import { getRepository } from 'typeorm';
+import { Transfer } from '../entities/Transfer.entity';
+
+@Controller('custom')
+export class CustomController {
+  @Get('largest-transfers')
+  async getLargestTransfers(@Query('limit') limit: number = 10) {
+    const transferRepo = getRepository(Transfer);
+
+    const transfers = await transferRepo.find({
+      order: {
+        value: 'DESC',
+      },
+      take: limit,
+    });
+
+    return transfers;
+  }
+}
+```
+
+Then, register your controller in your application module:
+
+```typescript
+// src/app.module.ts
+import { Module } from '@nestjs/common';
+import { IndexerModule } from '@open-ethereum/indexer';
+import { CustomController } from './controllers/custom.controller';
+import { indexerConfig } from './indexer.config';
+import './subscriptions';
+
+@Module({
+  imports: [IndexerModule.forRoot(indexerConfig)],
+  controllers: [CustomController],
+})
+export class AppModule {}
+```
+
+## Block Monitor API
+
+The Block Monitor provides endpoints for controlling the indexing process:
+
+### Get Status
+
+Retrieve the current status of the block monitor.
+
+```text
+GET /blocks/monitor/status
+```
+
+**Example Response:**
+
+```json
+{
+  "status": "running",
+  "latestProcessedBlock": 16000000,
+  "startBlock": 15000000,
+  "currentHead": 16000010
+}
+```
+
+### Start Block Monitor
+
+Start the block monitor if it's stopped.
+
+```text
+POST /blocks/monitor/start
+```
+
+### Stop Block Monitor
+
+Stop the block monitor.
+
+```text
+POST /blocks/monitor/stop
+```
+
+### Reset Block Monitor
+
+Reset the block monitor to start from a specific block.
+
+```text
+POST /blocks/monitor/reset?blockNumber=15000000
+```
+
+**Query Parameters:**
+
+- `blockNumber`: The block number to reset to
+
+## API Security
+
+By default, the API does not include authentication. In a production environment, you should add authentication:
+
+```typescript
+// src/main.ts
+import { NestFactory } from '@nestjs/core';
+import { setupSwagger } from '@open-ethereum/indexer';
+import { AppModule } from './app.module';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+
+  // Add API key authentication middleware
+  app.use((req, res, next) => {
+    const apiKey = req.headers['x-api-key'];
+    if (!apiKey || apiKey !== process.env.API_KEY) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+    next();
+  });
+
+  // Setup Swagger
+  setupSwagger(app);
+
+  await app.listen(3000);
+}
+bootstrap();
+```
+
+## CORS Configuration
+
+If your API will be accessed from a browser on a different domain, you need to configure CORS:
+
+```typescript
+// src/main.ts
+import { NestFactory } from '@nestjs/core';
+import { setupSwagger } from '@open-ethereum/indexer';
+import { AppModule } from './app.module';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+
+  // Configure CORS
+  app.enableCors({
+    origin: ['http://localhost:3000', 'https://yourdomain.com'],
+    methods: ['GET', 'POST'],
+    credentials: true,
+  });
+
+  // Setup Swagger
+  setupSwagger(app);
+
+  await app.listen(3000);
+}
+bootstrap();
+```
+
+## Rate Limiting
+
+For production APIs, consider adding rate limiting:
+
+```typescript
+// src/app.module.ts
+import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { IndexerModule } from '@open-ethereum/indexer';
+import { indexerConfig } from './indexer.config';
+
+@Module({
+  imports: [
+    IndexerModule.forRoot(indexerConfig),
+    ThrottlerModule.forRoot({
+      ttl: 60, // Time-to-live (seconds)
+      limit: 10, // Request limit per ttl
+    }),
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
+})
+export class AppModule {}
+```
+
+## API Documentation with Swagger
+
+The Open Ethereum Indexer uses Swagger for API documentation. The default configuration includes:
+
+- Detailed endpoint descriptions
+- Request and response schemas
+- Try-it-out functionality to test endpoints directly
+
+You can customize the Swagger configuration:
+
+```typescript
+// src/main.ts
+import { NestFactory } from '@nestjs/core';
+import { setupSwagger } from '@open-ethereum/indexer';
+import { AppModule } from './app.module';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+
+  // Custom Swagger setup
+  setupSwagger(app, {
+    title: 'My Ethereum Indexer API',
+    description: 'API for accessing indexed Ethereum data',
+    version: '1.0',
+    path: '/documentation', // Custom path for Swagger UI
+  });
+
+  await app.listen(3000);
+}
+bootstrap();
+```
+
+## GraphQL API
+
+In addition to the REST API, the indexer also supports GraphQL. See the [GraphQL](/graphql) section for details.
