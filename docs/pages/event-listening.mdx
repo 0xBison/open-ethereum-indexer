@@ -1,6 +1,6 @@
-# Event Indexing
+# Event Listening
 
-Open Ethereum Indexer provides a powerful system for monitoring and processing smart contract events. This page explains how to set up event handlers and process blockchain events in your application.
+Open Ethereum Indexer provides an easy to use mechanism for monitoring and processing smart contract events. This page explains how to set up event handlers and process blockchain events in your application.
 
 ## Event Handlers
 
@@ -8,7 +8,7 @@ Event handlers allow you to react to specific events emitted by smart contracts 
 
 ### Registering Event Handlers
 
-You can register event handlers using the `onEvent` function:
+You can register event handlers using the `onEvent` function which takes an `onIndex` method which runs when the event is captured on chain. You can also add an `onDeindex` method which runs when the event is deindexed (during a chain reorganization). This is for notification purposes - you do NOT need to remove events that you added in the index method. This will be handled by the indexer.
 
 ```typescript
 import { onEvent } from '@open-ethereum/indexer';
@@ -32,7 +32,8 @@ onEvent('ContractName:EventName', {
     // This code runs if the event is deindexed (during a chain reorganization)
     console.log('Event deindexed:', payload);
 
-    // Remove or update stored data as necessary
+    // You don't need to remove the previously indexed event here - it will be handled automatically.
+    // But this mechanism serves as a notification in case you need to know that an event was deindexed.
   },
 });
 ```
@@ -53,7 +54,6 @@ The event handler receives a payload with the following structure:
 interface LogEvent {
   log: ethers.providers.Log; // Raw log data
   parsedEvent: ethers.utils.LogDescription; // Parsed event data
-  block: BlockEvent; // Block information
 }
 ```
 

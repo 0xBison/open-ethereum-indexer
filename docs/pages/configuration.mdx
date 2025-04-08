@@ -12,7 +12,7 @@ interface IndexerConfig {
   database: DatabaseModuleOptions; // Database connection configuration
   app?: {
     // Optional application settings
-    disableController?: boolean;
+    disableRootController?: boolean;
     disableMetrics?: boolean;
   };
 }
@@ -139,7 +139,7 @@ export const indexerConfig: IndexerConfig = {
     logging: false,
   },
   app: {
-    disableController: false,
+    disableRootController: false,
     disableMetrics: false,
   },
 };
@@ -171,7 +171,7 @@ If you don't need the built-in REST API controllers:
 const indexerConfig: IndexerConfig = {
   // ...other config
   app: {
-    disableController: true,
+    disableRootController: true,
   },
 };
 ```

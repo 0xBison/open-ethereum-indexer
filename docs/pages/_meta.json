@@ -9,7 +9,7 @@
       "title": "Core Concepts",
       "type": "separator"
     },
-    "event-indexing": "Event Indexing",
+    "event-listening": "Event Listening",
     "block-monitoring": "Block Monitoring",
     "subscriptions": "Subscriptions",
     "entity-management": "Working with Entities",
@@ -25,8 +25,11 @@
       "title": "Examples",
       "type": "separator"
     },
-    "basic-example": "Basic Example",
-    "block-notifier": "Block Notifier",
-    "advanced-examples": "Advanced Examples",
+    "example-basic": "Basic Example",
+    "example-block-notifier": "Block Notifier",
+    "support-the-project": {
+      "title": "Support the Project",
+      "type": "separator"
+    },
     "contributing": "Contributing"
   }

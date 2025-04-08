@@ -17,7 +17,8 @@ export interface IndexerConfig {
   indexer: Config;
   database: DatabaseModuleOptions;
   app?: {
-    disableController?: boolean;
+    disableRootController?: boolean;
+    disableBlockMonitorController?: boolean;
     disableMetrics?: boolean;
   };
 }
@@ -34,14 +35,14 @@ export class IndexerModule {
         DatabaseModule.forRoot(indexerConfig.database),
         CoreModule,
         EthereumClientModule,
-        GenericIndexerModule.forRoot(),
-        GenericControllerModule.forEntities(),
+        // GenericIndexerModule.forRoot(),
+        // GenericControllerModule.forEntities(),
         // GraphQLAppModule.forRoot(),
         ...(indexerConfig.app?.disableMetrics
           ? []
           : [PrometheusModule.register()]),
       ],
-      controllers: indexerConfig.app?.disableController
+      controllers: indexerConfig.app?.disableRootController
         ? []
         : [IndexerController],
     };

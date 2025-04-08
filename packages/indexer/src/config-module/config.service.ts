@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { Interface } from '@ethersproject/abi';
+import { EventFragment, Interface } from '@ethersproject/abi';
 import {
   Config,
   EventInfo,
@@ -7,6 +7,7 @@ import {
   TopicList,
   TopicFilter,
 } from './types';
+import { getFullEventSignature } from 'solidity-events-to-typeorm';
 
 // Wildcard address for matching any contract
 export const WILDCARD_ADDRESS = '*';
@@ -55,8 +56,7 @@ export class ConfigService {
       for (const item of filteredEvents) {
         if (!item.name) continue;
 
-        const inputTypes = item.inputs?.map((input) => input.type).join(',');
-        const signature = `${item.name}(${inputTypes})`;
+        const signature = getFullEventSignature(item as EventFragment);
 
         // Get the event fragment using the full signature
         const eventFragment = contractInterface.getEvent(signature);

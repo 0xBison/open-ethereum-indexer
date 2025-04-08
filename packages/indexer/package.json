@@ -52,6 +52,7 @@
     "prom-client": "^15.1.3",
     "rxjs": "^7.8.1",
     "solidity-event-test-suite": "^0.0.12",
+    "solidity-events-to-typeorm": "^0.0.7",
     "sqlite3": "^5.1.7",
     "typeorm": "^0.3.20",
     "typeorm-naming-strategies": "^4.1.0",

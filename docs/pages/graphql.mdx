@@ -29,7 +29,7 @@ export class IndexerModule {
           ? []
           : [PrometheusModule.register()]),
       ],
-      controllers: indexerConfig.app?.disableController
+      controllers: indexerConfig.app?.disableRootController
         ? []
         : [IndexerController],
     };

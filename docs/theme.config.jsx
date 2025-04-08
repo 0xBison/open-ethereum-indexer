@@ -19,7 +19,6 @@ export default {
   footer: {
     text: 'MIT - Open Ethereum Indexer.'
   },
-  showCopyCode: true,
   faviconGlyph: "✨",
   darkMode: true
 } 

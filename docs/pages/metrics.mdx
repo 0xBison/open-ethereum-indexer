@@ -8,17 +8,11 @@ The indexer automatically collects and exposes various metrics about its operati
 
 - **Block processing metrics**: Number of blocks processed, processing time
 - **Event processing metrics**: Number of events indexed, processing time
-- **Database metrics**: Query execution time, connection pool status
-- **HTTP metrics**: API request count, response time, error rate
 - **System metrics**: Memory usage, CPU usage
 
 ## Accessing Metrics
 
-By default, metrics are exposed on a separate port (to avoid affecting your main API performance) at:
-
-```
-http://localhost:3066/metrics
-```
+By default, metrics are exposed on the same port as the indexer. They are available at the `http://localhost:PORT/metrics` endpoint. However, you most likely don't want these to be publicly accessible.
 
 You can change the metrics port by setting the `METRICS_PORT` environment variable or in your application's bootstrap code:
 
@@ -214,81 +208,3 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:3066']
 ```
-
-### Sample Grafana Dashboard
-
-You can create dashboards to visualize your indexer's performance:
-
-- Block processing rate and time
-- Event processing rate and time
-- Database performance
-- API usage and performance
-- System resource usage
-
-## Health Checks
-
-In addition to metrics, you can add health checks to monitor your indexer's status:
-
-```typescript
-import { Controller, Get } from '@nestjs/common';
-import {
-  HealthCheck,
-  HealthCheckService,
-  TypeOrmHealthIndicator,
-} from '@nestjs/terminus';
-
-@Controller('health')
-export class HealthController {
-  constructor(
-    private health: HealthCheckService,
-    private db: TypeOrmHealthIndicator,
-  ) {}
-
-  @Get()
-  @HealthCheck()
-  check() {
-    return this.health.check([() => this.db.pingCheck('database')]);
-  }
-}
-```
-
-## Alerting
-
-With Prometheus, you can set up alerts for various conditions:
-
-- Indexer falling behind the chain
-- High error rates
-- Database connection issues
-- System resource exhaustion
-
-Example Prometheus alert rule:
-
-```yaml
-groups:
-  - name: indexer_alerts
-    rules:
-      - alert: IndexerBehind
-        expr: max_block_height - last_indexed_block > 10
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: 'Indexer falling behind chain'
-          description: 'Indexer is more than 10 blocks behind the chain for 5 minutes.'
-```
-
-## Performance Tuning
-
-Use the metrics to identify bottlenecks in your indexer:
-
-1. Look for event handlers with high processing times
-2. Check database query performance
-3. Monitor memory usage patterns
-4. Analyze block processing rate
-
-Based on the metrics, you can tune your indexer's configuration:
-
-- Adjust `MAX_BLOCKS_PER_QUERY` to balance throughput and memory usage
-- Optimize database indices for common queries
-- Scale horizontally for high-volume chains
-- Consider dedicated instances for specific tasks
