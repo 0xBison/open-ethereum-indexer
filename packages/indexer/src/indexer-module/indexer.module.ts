@@ -45,6 +45,7 @@ export class IndexerModule {
       controllers: indexerConfig.app?.disableRootController
         ? []
         : [IndexerController],
+      exports: [ConfigModule, CoreModule, EthereumClientModule],
     };
   }
 }
