@@ -2,7 +2,7 @@
   "name": "@open-ethereum/indexer",
   "version": "0.0.1",
   "description": "Open Ethereum Indexer",
-  "private": true,
+  "private": false,
   "license": "UNLICENSED",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -91,5 +91,8 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
