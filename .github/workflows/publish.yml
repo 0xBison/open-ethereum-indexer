@@ -33,8 +33,10 @@ jobs:
       - name: Run E2E tests
         run: pnpm test:e2e:indexer
 
+      # Change directory to indexer package before publishing
       - name: Publish indexer package
-        working-directory: packages/indexer
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
-        run: pnpm publish --no-git-checks --access public
+        run: |
+          cd packages/indexer
+          pnpm publish --no-git-checks --access public

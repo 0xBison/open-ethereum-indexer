@@ -1,5 +1,5 @@
 {
-  "name": "@open-ethereum-indexer/docs",
+  "name": "@open-ethereum/indexer-docs",
   "version": "0.0.1",
   "private": true,
   "scripts": {
