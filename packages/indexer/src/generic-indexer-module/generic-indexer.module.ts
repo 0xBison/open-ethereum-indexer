@@ -1,9 +1,5 @@
 import { Module, DynamicModule } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import {
-  GenericEventLogIndexer,
-  GenericEventLogIndexerIdentifier,
-} from './generic-event-log-indexer';
 import { GenericEventSubscriber } from './generic-event-subscriber';
 import { BlockchainEventEntity } from './entity/BlockchainEventEntity';
 import { makeGaugeProvider } from '@willsoto/nestjs-prometheus';
@@ -31,7 +27,6 @@ export class GenericIndexerModule {
           labelNames: ['event_name'],
         }),
       ],
-      exports: [GenericEventLogIndexerIdentifier],
     };
   }
 }
