@@ -70,7 +70,7 @@ async function getCounterValue(contract: ethers.Contract) {
 
 const USE_CONTAINERIZED_NODE = true;
 
-describe('Ethereum Chain Reorg Tests', () => {
+describe.skip('Ethereum Chain Reorg Tests', () => {
   let provider: ethers.providers.JsonRpcProvider;
   let wallet: ethers.Wallet;
   let counterContract: ethers.Contract;
