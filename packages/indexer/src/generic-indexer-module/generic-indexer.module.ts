@@ -19,7 +19,6 @@ export class GenericIndexerModule {
       ],
       providers: [
         GenericEventSubscriber,
-        GenericBlockSubscriber,
         makeGaugeProvider({
           name: 'indexed_event',
           help: 'amount of events indexed or deindexed',
