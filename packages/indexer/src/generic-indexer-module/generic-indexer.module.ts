@@ -4,7 +4,6 @@ import { GenericEventSubscriber } from './generic-event-subscriber';
 import { BlockchainEventEntity } from './entity/BlockchainEventEntity';
 import { makeGaugeProvider } from '@willsoto/nestjs-prometheus';
 import { SQLTransactionModule } from '../sql-transaction-module';
-import { GenericBlockSubscriber } from '../../../../examples/wildcard-transfer/src/generic-block-subscriber';
 
 // Export entities so they can be used by other modules
 export const GENERIC_INDEXER_ENTITIES = [BlockchainEventEntity];
