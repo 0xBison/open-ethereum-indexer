@@ -402,9 +402,6 @@ importers:
       '@open-ethereum/indexer':
         specifier: workspace:*
         version: link:../../packages/indexer
-      deepmerge:
-        specifier: ^4.3.1
-        version: 4.3.1
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -7549,6 +7546,7 @@ packages:
   /deepmerge@4.3.1:
     resolution: {integrity: sha512-3sUqbMEc77XqpdNO7FRyRog+eW3ph+GYCbj+rK+uYyRMuwsVy0rMiVtPn+QJlKFvWP/1PYpapqYn0Me2knFn+A==}
     engines: {node: '>=0.10.0'}
+    dev: true
 
   /defaults@1.0.4:
     resolution: {integrity: sha512-eFuaLoy/Rxalv2kr+lqMlUnrDWV+3j4pljOIJgLIhI058IQfWJ7vXhyEIHu+HtC738klGALYxOKDO0bQP3tg8A==}
@@ -8925,7 +8923,7 @@ packages:
       semver: 7.7.1
       tapable: 2.2.1
       typescript: 5.7.3
-      webpack: 5.98.0(@swc/core@1.11.18)
+      webpack: 5.98.0
     dev: true
 
   /form-data-encoder@2.1.4:
@@ -10667,7 +10665,7 @@ packages:
       pretty-format: 29.7.0
       slash: 3.0.0
       strip-json-comments: 3.1.1
-      ts-node: 10.9.2(@swc/core@1.11.18)(@types/node@22.14.0)(typescript@5.8.3)
+      ts-node: 10.9.2(@types/node@20.17.30)(typescript@5.8.3)
     transitivePeerDependencies:
       - babel-plugin-macros
       - supports-color
@@ -15266,31 +15264,6 @@ packages:
       webpack: 5.98.0(@swc/core@1.11.18)
     dev: true
 
-  /terser-webpack-plugin@5.3.14(@swc/core@1.11.18)(webpack@5.99.2):
-    resolution: {integrity: sha512-vkZjpUjb6OMS7dhV+tILUW6BhpDR7P2L/aQSAv+Uwk+m8KATX9EccViHTJR2qDtACKPIYndLGCyl3FMo+r2LMw==}
-    engines: {node: '>= 10.13.0'}
-    peerDependencies:
-      '@swc/core': '*'
-      esbuild: '*'
-      uglify-js: '*'
-      webpack: ^5.1.0
-    peerDependenciesMeta:
-      '@swc/core':
-        optional: true
-      esbuild:
-        optional: true
-      uglify-js:
-        optional: true
-    dependencies:
-      '@jridgewell/trace-mapping': 0.3.25
-      '@swc/core': 1.11.18
-      jest-worker: 27.5.1
-      schema-utils: 4.3.0
-      serialize-javascript: 6.0.2
-      terser: 5.39.0
-      webpack: 5.99.2(@swc/core@1.11.18)
-    dev: true
-
   /terser-webpack-plugin@5.3.14(webpack@5.98.0):
     resolution: {integrity: sha512-vkZjpUjb6OMS7dhV+tILUW6BhpDR7P2L/aQSAv+Uwk+m8KATX9EccViHTJR2qDtACKPIYndLGCyl3FMo+r2LMw==}
     engines: {node: '>= 10.13.0'}
@@ -15313,6 +15286,30 @@ packages:
       serialize-javascript: 6.0.2
       terser: 5.39.0
       webpack: 5.98.0
+    dev: true
+
+  /terser-webpack-plugin@5.3.14(webpack@5.99.2):
+    resolution: {integrity: sha512-vkZjpUjb6OMS7dhV+tILUW6BhpDR7P2L/aQSAv+Uwk+m8KATX9EccViHTJR2qDtACKPIYndLGCyl3FMo+r2LMw==}
+    engines: {node: '>= 10.13.0'}
+    peerDependencies:
+      '@swc/core': '*'
+      esbuild: '*'
+      uglify-js: '*'
+      webpack: ^5.1.0
+    peerDependenciesMeta:
+      '@swc/core':
+        optional: true
+      esbuild:
+        optional: true
+      uglify-js:
+        optional: true
+    dependencies:
+      '@jridgewell/trace-mapping': 0.3.25
+      jest-worker: 27.5.1
+      schema-utils: 4.3.0
+      serialize-javascript: 6.0.2
+      terser: 5.39.0
+      webpack: 5.99.2
     dev: true
 
   /terser@5.39.0:
@@ -15586,7 +15583,7 @@ packages:
       bs-logger: 0.2.6
       ejs: 3.1.10
       fast-json-stable-stringify: 2.1.0
-      jest: 29.7.0(@types/node@22.14.0)(ts-node@10.9.2)
+      jest: 29.7.0
       jest-util: 29.7.0
       json5: 2.2.3
       lodash.memoize: 4.1.2
@@ -15610,7 +15607,7 @@ packages:
       semver: 7.7.1
       source-map: 0.7.4
       typescript: 5.8.3
-      webpack: 5.99.2(@swc/core@1.11.18)
+      webpack: 5.99.2
     dev: true
 
   /ts-node@10.9.2(@swc/core@1.11.18)(@types/node@22.14.0)(typescript@5.8.3):
@@ -16528,7 +16525,7 @@ packages:
       - uglify-js
     dev: true
 
-  /webpack@5.99.2(@swc/core@1.11.18):
+  /webpack@5.99.2:
     resolution: {integrity: sha512-1LYyB3DIKS4k2JlBHKp+b63b1jp9Nn86wypihsZOeKove7kpRCAVqN8pIle0wbs6a0p4kxkMt01lbb6Y93CpRw==}
     engines: {node: '>=10.13.0'}
     hasBin: true
@@ -16558,7 +16555,7 @@ packages:
       neo-async: 2.6.2
       schema-utils: 4.3.0
       tapable: 2.2.1
-      terser-webpack-plugin: 5.3.14(@swc/core@1.11.18)(webpack@5.99.2)
+      terser-webpack-plugin: 5.3.14(webpack@5.99.2)
       watchpack: 2.4.2
       webpack-sources: 3.2.3
     transitivePeerDependencies:
