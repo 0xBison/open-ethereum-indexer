@@ -1,6 +1,6 @@
 export * from './generic-controller.module';
 export * from './generic-entity.controller.factory';
-export * from './generic-event-log-indexer-adapter';
+export * from './generic-event-subscriber';
 export * from './generic-event-log-indexer';
 export * from './generic-indexer.module';
 export * from './entity-registry';

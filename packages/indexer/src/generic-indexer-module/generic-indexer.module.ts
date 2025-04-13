@@ -4,11 +4,11 @@ import {
   GenericEventLogIndexer,
   GenericEventLogIndexerIdentifier,
 } from './generic-event-log-indexer';
-import { GenericEventLogIndexerAdapter } from './generic-event-log-indexer-adapter';
+import { GenericEventSubscriber } from './generic-event-subscriber';
 import { BlockchainEventEntity } from './entity/BlockchainEventEntity';
 import { makeGaugeProvider } from '@willsoto/nestjs-prometheus';
-import { CoreModule } from '../core-module/core.module';
-import { DatabaseModule } from '../database-module';
+import { SQLTransactionModule } from '../sql-transaction-module';
+import { GenericBlockSubscriber } from './generic-block-subscriber';
 
 // Export entities so they can be used by other modules
 export const GENERIC_INDEXER_ENTITIES = [BlockchainEventEntity];
@@ -19,15 +19,16 @@ export class GenericIndexerModule {
     return {
       module: GenericIndexerModule,
       imports: [
+        SQLTransactionModule,
         TypeOrmModule.forFeature(GENERIC_INDEXER_ENTITIES),
-        CoreModule, // Import CoreModule to get EVENT_MANAGER_SERVICE
       ],
       providers: [
         {
           provide: GenericEventLogIndexerIdentifier,
           useClass: GenericEventLogIndexer,
         },
-        GenericEventLogIndexerAdapter,
+        GenericEventSubscriber,
+        GenericBlockSubscriber,
         makeGaugeProvider({
           name: 'indexed_event',
           help: 'amount of events indexed or deindexed',

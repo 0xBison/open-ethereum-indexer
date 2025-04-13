@@ -15,6 +15,17 @@ import {
 } from './counter/entities';
 import { CounterMigrations1742198536891 } from './counter/migrations/1742198536891-CounterMigrations';
 import CounterArtifact from '../../../solidity/artifacts/contracts/Counter.sol/Counter.json';
+import { entityRegistry } from '../src/generic-indexer-module';
+
+const entities = [
+  CounterIncrementedEntity_75bd9fe0,
+  CounterDecrementedEntity_f4b3f987,
+];
+
+// Register all entities
+entities.forEach((entity) => {
+  entityRegistry.registerGeneric(entity);
+});
 
 // Helper functions to get blockchain state
 async function getChainState(
@@ -122,10 +133,6 @@ describe('Ethereum Chain Reorg Tests', () => {
         },
       },
       databaseConfig: {
-        entities: [
-          CounterIncrementedEntity_75bd9fe0,
-          CounterDecrementedEntity_f4b3f987,
-        ],
         migrations: [CounterMigrations1742198536891],
       },
     };

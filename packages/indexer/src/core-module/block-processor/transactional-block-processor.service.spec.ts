@@ -4,7 +4,7 @@ import { TransactionalBlockProcessor } from './transactional-block-processor.ser
 import {
   SQLTransactionService,
   SQLTransactionServiceIdentifier,
-} from '../sql-transaction/sql-transaction.service';
+} from '../../sql-transaction-module/sql-transaction.service';
 import { EntityManager } from 'typeorm';
 import { Logger } from '@nestjs/common';
 import {
@@ -13,7 +13,7 @@ import {
   C,
   BlockIndex,
   TestLogger,
-} from '../sql-transaction/test/shared-test-utils';
+} from '../../sql-transaction-module/test/shared-test-utils';
 
 describe('TransactionalBlockProcessor', () => {
   let reorgService: TransactionalBlockProcessor;

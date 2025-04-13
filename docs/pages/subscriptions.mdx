@@ -1,223 +1,145 @@
 # Subscriptions
 
-Open Ethereum Indexer provides a flexible subscription system that integrates with NestJS dependency injection. This page explains the different ways to register event and block handlers, and how to use NestJS providers with them.
+Open Ethereum Indexer provides multiple ways to handle blockchain events and blocks. This page explains the different approaches available.
 
-## Static vs. Dynamic Handlers
+## Class-based Subscribers (Recommended)
 
-The indexer supports two types of handlers:
+The recommended way to create subscribers is by extending the abstract subscriber classes. This approach provides better TypeScript support and cleaner code organization.
 
-1. **Static Handlers**: Registered directly using global functions, outside of any class
-2. **Dynamic Handlers**: Registered within NestJS services using dependency injection
+### Event Subscribers
 
-### Static Handlers
-
-Static handlers are registered using the global `onEvent` and `onBlock` functions:
+To create an event subscriber, extend the `AbstractEventSubscriber` class:
 
 ```typescript
-// In subscriptions.ts or any file that's imported at application startup
-import { onEvent, onBlock } from '@open-ethereum/indexer';
-
-// Static event handler
-onEvent('Contract:Event', {
-  onIndex: async (payload) => {
-    console.log('Event processed:', payload);
-  },
-});
-
-// Static block handler
-onBlock({
-  onIndex: async (payload) => {
-    console.log('Block processed:', payload);
-  },
-});
-```
-
-These handlers are registered before the application starts and don't have access to NestJS dependency injection.
-
-### Dynamic Handlers
-
-Dynamic handlers are registered within NestJS services and have full access to dependency injection:
-
-```typescript
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import { EventManagerService } from '@open-ethereum/indexer';
+import { Injectable } from '@nestjs/common';
+import {
+  AbstractEventSubscriber,
+  LogEvent,
+  LogContext,
+} from '@open-ethereum/indexer';
+import { MyCustomService } from './my-custom.service';
 
 @Injectable()
-export class MyEventService implements OnModuleInit {
-  constructor(private readonly eventManager: EventManagerService) {}
-
-  onModuleInit() {
-    // Register event handler within the service
-    this.eventManager.onEvent('Contract:Event', {
-      onIndex: async (payload) => {
-        // Access service methods and properties here
-        await this.processEvent(payload);
-      },
-    });
-
-    // Register block handler within the service
-    this.eventManager.onBlock({
-      onIndex: async (payload) => {
-        await this.processBlock(payload);
-      },
-    });
-  }
-
-  private async processEvent(payload: any) {
-    // Use other services and database connections
-    console.log('Processing event in service');
-  }
-
-  private async processBlock(payload: any) {
-    // Use other services and database connections
-    console.log('Processing block in service');
-  }
-}
-```
-
-## Using NestJS Providers
-
-NestJS providers give you access to dependency injection, allowing your handlers to use other services.
-
-### Example: Using Services in Handlers
-
-Here's a complete example of a service that processes events and uses dependency injection:
-
-```typescript
-// event.service.ts
-import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
-import { EventManagerService } from '@open-ethereum/indexer';
-import { DatabaseService } from './database.service';
-
-@Injectable()
-export class EventService implements OnModuleInit {
-  private readonly logger = new Logger(EventService.name);
+export class TransferSubscriber extends AbstractEventSubscriber {
+  // Required: Specify the event pattern to listen for
+  readonly eventPattern = 'ERC20:Transfer';
 
   constructor(
-    private readonly eventManager: EventManagerService,
-    private readonly databaseService: DatabaseService,
-  ) {}
+    private myCustomService: MyCustomService, // Inject your services
+  ) {
+    super();
+  }
 
-  onModuleInit() {
-    this.logger.log('Registering event handlers');
+  // Optional: Handle indexing events
+  async onIndex(payload: LogEvent, context: LogContext): Promise<void> {
+    const { parsedEvent } = payload;
+    const { from, to, value } = parsedEvent.args;
 
-    // Register event handler
-    this.eventManager.onEvent('ERC20:Transfer', {
-      onIndex: async (payload) => {
-        const { from, to, value } = payload.parsedEvent.args;
+    await this.myCustomService.processTransfer(from, to, value);
+  }
 
-        // Use injected service
-        await this.databaseService.saveTransfer({
-          from,
-          to,
-          value: value.toString(),
-          blockNumber: payload.block.number,
-        });
-      },
-    });
+  // Optional: Handle de-indexing events (e.g., on chain reorganizations)
+  async onDeindex(payload: LogEvent, context: LogContext): Promise<void> {
+    // Handle event removal
   }
 }
 ```
 
-Then, make sure to include your service in a module:
+### Block Subscribers
+
+For block-level events, extend the `AbstractBlockSubscriber` class:
 
 ```typescript
-// app.module.ts
+import { Injectable } from '@nestjs/common';
+import {
+  AbstractBlockSubscriber,
+  BlockEvent,
+  LogContext,
+} from '@open-ethereum/indexer';
+import { BlockAnalyticsService } from './block-analytics.service';
+
+@Injectable()
+export class BlockMetricsSubscriber extends AbstractBlockSubscriber {
+  constructor(
+    private blockAnalytics: BlockAnalyticsService, // Inject your services
+  ) {
+    super();
+  }
+
+  // Optional: Handle new blocks
+  async onIndex(payload: BlockEvent, context: LogContext): Promise<void> {
+    const { number, timestamp, transactions } = payload;
+    await this.blockAnalytics.recordBlockMetrics(
+      number,
+      timestamp,
+      transactions.length,
+    );
+  }
+
+  // Optional: Handle block removals
+  async onDeindex(payload: BlockEvent, context: LogContext): Promise<void> {
+    // Handle block removal
+  }
+}
+```
+
+### Registering Subscribers
+
+Register your subscribers in your NestJS module:
+
+```typescript
 import { Module } from '@nestjs/common';
 import { IndexerModule } from '@open-ethereum/indexer';
-import { EventService } from './event.service';
-import { DatabaseService } from './database.service';
+import { TransferSubscriber } from './transfer.subscriber';
+import { BlockMetricsSubscriber } from './block-metrics.subscriber';
+import { MyCustomService } from './my-custom.service';
+import { BlockAnalyticsService } from './block-analytics.service';
 
 @Module({
   imports: [IndexerModule.forRoot(indexerConfig)],
-  providers: [EventService, DatabaseService],
+  providers: [
+    TransferSubscriber,
+    BlockMetricsSubscriber,
+    MyCustomService,
+    BlockAnalyticsService,
+  ],
 })
 export class AppModule {}
 ```
 
-## Accessing NestJS Services from Static Handlers
+### Key Benefits of Class-based Subscribers
 
-Sometimes you might need to access NestJS services from static handlers. One approach is to use a provider singleton pattern:
+1. **Type Safety**: Full TypeScript support for event payloads and context
+2. **Dependency Injection**: Clean integration with NestJS DI system
+3. **Code Organization**: Better separation of concerns
+4. **Optional Methods**: Implement only the methods you need
+5. **Automatic Registration**: No need to manually register in `onModuleInit`
 
-```typescript
-// service-provider.ts
-export class ServiceProvider {
-  private static instance: ServiceProvider;
-  private services: Map<string, any> = new Map();
+## Service-based Subscribers (Legacy)
 
-  private constructor() {}
+[Previous documentation about EventManagerService-based subscribers remains unchanged...]
 
-  static getInstance(): ServiceProvider {
-    if (!ServiceProvider.instance) {
-      ServiceProvider.instance = new ServiceProvider();
-    }
-    return ServiceProvider.instance;
-  }
+## Static Handlers
 
-  setService(name: string, service: any): void {
-    this.services.set(name, service);
-  }
+[Previous documentation about static handlers remains unchanged...]
 
-  getService<T>(name: string): T | null {
-    return (this.services.get(name) as T) || null;
-  }
-}
-```
+## Choosing an Approach
 
-```typescript
-// telegram.service.ts
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import { ServiceProvider } from './service-provider';
+Here's a comparison of the different subscription approaches:
 
-@Injectable()
-export class TelegramService implements OnModuleInit {
-  onModuleInit() {
-    // Register this service in the provider
-    ServiceProvider.getInstance().setService('telegram', this);
-  }
-
-  sendMessage(message: string): Promise<void> {
-    console.log('Sending message:', message);
-    return Promise.resolve();
-  }
-}
-```
-
-```typescript
-// subscriptions.ts
-import { onBlock } from '@open-ethereum/indexer';
-import { ServiceProvider } from './service-provider';
-
-onBlock({
-  onIndex: async (payload) => {
-    const { number } = payload;
-
-    if (number % 1000 === 0) {
-      // Get the service from the provider
-      const telegramService =
-        ServiceProvider.getInstance().getService<TelegramService>('telegram');
-
-      if (telegramService) {
-        await telegramService.sendMessage(`Block ${number} processed`);
-      }
-    }
-  },
-});
-```
-
-## Differences Between Static and Dynamic Handlers
-
-| Feature              | Static Handlers                  | Dynamic Handlers                  |
-| -------------------- | -------------------------------- | --------------------------------- |
-| Registration         | At module load time              | During NestJS lifecycle           |
-| Dependency Injection | No direct access                 | Full access                       |
-| Initialization       | Before NestJS starts             | After NestJS services are ready   |
-| Use Case             | Simple handlers, no dependencies | Complex handlers needing services |
-| Persistence          | Throughout application lifecycle | Tied to service lifecycle         |
+| Feature              | Class-based Subscribers | Service-based Subscribers | Static Handlers             |
+| -------------------- | ----------------------- | ------------------------- | --------------------------- |
+| TypeScript Support   | Full                    | Partial                   | Limited                     |
+| Dependency Injection | Native                  | Native                    | Requires Service Provider   |
+| Code Organization    | Best                    | Good                      | Basic                       |
+| Setup Complexity     | Low                     | Medium                    | Low                         |
+| Use Case             | Most scenarios          | Legacy code               | Simple, standalone handlers |
+| Recommended For      | New development         | Existing implementations  | Basic processing            |
 
 ## Best Practices
 
-1. **Use dynamic handlers** when you need access to NestJS services and dependency injection
-2. **Use static handlers** for simple processing that doesn't require other services
-3. **Keep handlers focused** on their specific task, following the Single Responsibility Principle
-4. **Consider service provider pattern** when you need to access services from static handlers
+1. **Use Class-based Subscribers** for new development
+2. **Implement Only Needed Methods** in subscribers (onIndex/onDeindex are optional)
+3. **Keep Subscribers Focused** on specific event types or functionality
+4. **Leverage Dependency Injection** for clean service integration
+5. **Use Meaningful Names** for subscriber classes that reflect their purpose

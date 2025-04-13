@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { INestApplication } from '@nestjs/common';
 import { Config, ConfigModule } from '../../src/config-module';
@@ -20,6 +20,7 @@ import {
   PostgreSqlContainer,
   StartedPostgreSqlContainer,
 } from '@testcontainers/postgresql';
+import { SQLTransactionModule } from '../../src/sql-transaction-module/sql-transaction.module';
 
 // Load test environment variables
 export function loadTestEnvironment() {
@@ -46,13 +47,14 @@ export function createTestModule(indexerConfig: IndexerTestSetupConfig) {
   let { rpcUrl, chainId } = indexerConfig.config.network;
 
   console.log(`Indexer started with RPC URL: ${rpcUrl}, Chain ID: ${chainId}`);
-
+  @Global()
   @Module({
     imports: [
       ConfigModule.register(indexerConfig.config),
       DatabaseModule.forRoot(indexerConfig.databaseConfig),
-      CoreModule,
+      CoreModule.register(),
       EthereumClientModule,
+      SQLTransactionModule,
       // Skip prometheus or it causes issues with the metrics being registered multiple times:
       // A metric with the name xxx has already been registered.
       // PrometheusModule.register(),
@@ -85,8 +87,6 @@ export class IndexerTestSetup {
       moduleBuilder: TestingModuleBuilder,
     ) => TestingModuleBuilder | Promise<TestingModuleBuilder>,
   ): Promise<INestApplication> {
-    console.log('in setup indexer');
-
     // Start PostgreSQL container if not skipped
     if (!indexerConfig.skipDatabaseContainer) {
       console.log('Starting PostgreSQL container...');
@@ -109,12 +109,8 @@ export class IndexerTestSetup {
       imports: [TestAppModule],
     });
 
-    console.log('before postgres container check');
-
     // If we have a postgres container, override the database config
     if (this.postgresContainer) {
-      console.log('WE HAVE A POSTGRES CONTAINER');
-
       const overrideDatabaseConfig = {
         SQL_HOST: this.postgresContainer.getHost(),
         SQL_PORT: this.postgresContainer.getPort(),
@@ -124,8 +120,6 @@ export class IndexerTestSetup {
         SQL_SCHEMA:
           indexerConfig.databaseSchema || process.env.SQL_SCHEMA || 'public',
       };
-
-      console.log('overrideDatabaseConfig', overrideDatabaseConfig);
 
       moduleBuilder = moduleBuilder
         .overrideProvider(DatabaseConfig)

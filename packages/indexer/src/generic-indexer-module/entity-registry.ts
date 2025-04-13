@@ -1,16 +1,28 @@
-// A global registry for entities
+interface EntityRegistration {
+  entity: any;
+  isGeneric: boolean;
+}
+
 class EntityRegistry {
-  private entities: Map<string, any> = new Map();
+  private entities: Map<string, EntityRegistration> = new Map();
 
   register(entity: any | any[]): void {
     if (Array.isArray(entity)) {
-      entity.forEach((e) => this.registerSingleEntity(e));
+      entity.forEach((e) => this.registerSingleEntity(e, false));
     } else {
-      this.registerSingleEntity(entity);
+      this.registerSingleEntity(entity, false);
     }
   }
 
-  private registerSingleEntity(entity: any): void {
+  registerGeneric(entity: any | any[]): void {
+    if (Array.isArray(entity)) {
+      entity.forEach((e) => this.registerSingleEntity(e, true));
+    } else {
+      this.registerSingleEntity(entity, true);
+    }
+  }
+
+  private registerSingleEntity(entity: any, isGeneric: boolean): void {
     if (!entity) {
       console.warn('Attempted to register undefined or null entity');
       return;
@@ -18,16 +30,29 @@ class EntityRegistry {
 
     const entityName = entity.name || 'Unknown';
 
-    // Check if this entity is already registered
-    if (this.entities.has(entityName)) {
+    // Update existing registration if it exists
+    const existing = this.entities.get(entityName);
+    if (existing) {
+      // If already registered as generic, keep it generic
+      existing.isGeneric = existing.isGeneric || isGeneric;
       return;
     }
 
-    this.entities.set(entityName, entity);
+    this.entities.set(entityName, { entity, isGeneric });
   }
 
   getAll(): any[] {
-    return Array.from(this.entities.values());
+    return Array.from(this.entities.values()).map((reg) => reg.entity);
+  }
+
+  getAllGeneric(): any[] {
+    return Array.from(this.entities.values())
+      .filter((reg) => reg.isGeneric)
+      .map((reg) => reg.entity);
+  }
+
+  isGenericEntity(entityName: string): boolean {
+    return this.entities.get(entityName)?.isGeneric ?? false;
   }
 }
 

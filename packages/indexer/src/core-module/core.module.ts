@@ -1,4 +1,4 @@
-import { Logger, Module } from '@nestjs/common';
+import { Logger, Module, DynamicModule } from '@nestjs/common';
 import { EthereumClientModule } from '../ethereum-client-module/ethereum-client.module';
 import {
   BlockMonitorService,
@@ -26,10 +26,7 @@ import {
   EventManagerService,
 } from './event-manager/event-manager.service';
 import { BlockMonitorController } from './block-monitor/block-monitor.controller';
-import {
-  SQLTransactionService,
-  SQLTransactionServiceIdentifier,
-} from './sql-transaction';
+import { SQLTransactionModule } from '../sql-transaction-module';
 import {
   TransactionalBlockProcessor,
   TransactionalBlockProcessorIdentifier,
@@ -77,53 +74,61 @@ const metrics = [
   }),
 ];
 
-@Module({
-  imports: [
-    TypedConfigModule.forRoot({
-      schema: CoreConfig,
-      load: dotenvLoader({
-        envFilePath:
-          process.env.NODE_ENV === 'test' ? ['.env.test', '.env'] : '.env',
-      }),
-    }),
-    TypeOrmModule.forFeature([JsonStoreEntity]),
-    EthereumClientModule,
-    JsonStoreModule,
-  ],
-  providers: [
-    {
-      provide: SQLTransactionServiceIdentifier,
-      useClass: SQLTransactionService,
-    },
-    {
-      provide: TransactionalBlockProcessorIdentifier,
-      useClass: TransactionalBlockProcessor,
-    },
-    {
-      provide: BlockMonitorServiceIdentifier,
-      useClass: BlockMonitorService,
-    },
-    {
-      provide: BlockProcessorServiceIdentifier,
-      useClass: BlockProcessorService,
-    },
-    {
-      provide: EventParserIdentifier,
-      useClass: EventParser,
-    },
-    {
-      provide: EVENT_MANAGER_SERVICE,
-      useClass: EventManagerService,
-    },
-    Logger,
-    ...metrics,
-  ],
-  controllers: [BlockMonitorController],
-  exports: [
-    EVENT_MANAGER_SERVICE,
-    EventParserIdentifier,
-    BlockProcessorServiceIdentifier,
-    BlockMonitorServiceIdentifier,
-  ],
-})
-export class CoreModule {}
+interface CoreModuleOptions {
+  disableBlockMonitorController?: boolean;
+}
+
+@Module({})
+export class CoreModule {
+  static register(options: CoreModuleOptions = {}): DynamicModule {
+    return {
+      module: CoreModule,
+      imports: [
+        TypedConfigModule.forRoot({
+          schema: CoreConfig,
+          load: dotenvLoader({
+            envFilePath:
+              process.env.NODE_ENV === 'test' ? ['.env.test', '.env'] : '.env',
+          }),
+        }),
+        TypeOrmModule.forFeature([JsonStoreEntity]),
+        EthereumClientModule,
+        JsonStoreModule,
+        SQLTransactionModule,
+      ],
+      providers: [
+        {
+          provide: TransactionalBlockProcessorIdentifier,
+          useClass: TransactionalBlockProcessor,
+        },
+        {
+          provide: BlockMonitorServiceIdentifier,
+          useClass: BlockMonitorService,
+        },
+        {
+          provide: BlockProcessorServiceIdentifier,
+          useClass: BlockProcessorService,
+        },
+        {
+          provide: EventParserIdentifier,
+          useClass: EventParser,
+        },
+        {
+          provide: EVENT_MANAGER_SERVICE,
+          useClass: EventManagerService,
+        },
+        Logger,
+        ...metrics,
+      ],
+      controllers: options.disableBlockMonitorController
+        ? []
+        : [BlockMonitorController],
+      exports: [
+        EVENT_MANAGER_SERVICE,
+        EventParserIdentifier,
+        BlockProcessorServiceIdentifier,
+        BlockMonitorServiceIdentifier,
+      ],
+    };
+  }
+}

@@ -115,6 +115,28 @@ git push origin feature/your-feature-name
 
 ## Development Workflow
 
+### Development Mode
+
+To develop the core packages and documentation with automatic rebuilding on changes:
+
+```bash
+pnpm dev
+```
+
+This command will start watchers for all core packages and documentation that will rebuild whenever files change.
+
+To run an example application in development mode:
+
+```bash
+cd examples/basic-example
+pnpm start:dev
+```
+
+For the most efficient workflow when working on both core packages and examples:
+
+1. In one terminal, run `pnpm dev` to watch and rebuild core packages
+2. If you make changes to core packages, restart your example application to pick up those changes
+
 ### Running Tests
 
 Run all tests:
@@ -127,16 +149,6 @@ Run specific tests:
 
 ```bash
 pnpm test -- -t "feature name"
-```
-
-### Running Examples
-
-To run an example:
-
-```bash
-cd examples/basic-example
-pnpm install
-pnpm start:dev
 ```
 
 ### Building Documentation

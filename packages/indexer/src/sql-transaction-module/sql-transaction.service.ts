@@ -21,6 +21,10 @@ export class SQLTransactionService {
     this.entityManager = entityManager;
   }
 
+  getEntityManager(): EntityManager {
+    return this.entityManager;
+  }
+
   getUndoOperations(): UndoOperation[] {
     return [...this.undoOperations];
   }

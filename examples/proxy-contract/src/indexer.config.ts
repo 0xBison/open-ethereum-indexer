@@ -1,6 +1,7 @@
-import { IndexerConfig } from '@open-ethereum/indexer';
+import { IndexerConfig, mergeEventAbis } from '@open-ethereum/indexer';
 import { entityRegistry } from '@open-ethereum/indexer';
-import proxyAbi from './abi/implementation.json';
+import proxyAbi from './abi/ComptrollerProxy.json';
+import implementationAbi from './abi/ComptrollerImplementation.json';
 import { InitialSchema1743919359054 } from './output/migrations/1743919359054-InitialSchema';
 
 export const indexerConfig: IndexerConfig = {
@@ -11,7 +12,7 @@ export const indexerConfig: IndexerConfig = {
     },
     contracts: {
       Comptroller: {
-        abi: proxyAbi,
+        abi: mergeEventAbis(proxyAbi, implementationAbi),
         address: '0x3d9819210A31b4961b30EF54bE2aeD79B9c9Cd3B',
         startBlock: 22199590,
         endBlock: 22199611,
@@ -19,7 +20,6 @@ export const indexerConfig: IndexerConfig = {
     },
   },
   database: {
-    entities: entityRegistry.getAll(),
     migrations: [InitialSchema1743919359054],
   },
 };

@@ -32,7 +32,4 @@ export const indexerConfig: IndexerConfig = {
   database: {
     migrations: [],
   },
-  app: {
-    disableMetrics: true,
-  },
 };

@@ -1,14 +1,14 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Log } from '@ethersproject/abstract-provider';
-import { InjectEntityManager } from '@nestjs/typeorm';
 import { InjectMetric } from '@willsoto/nestjs-prometheus';
 import { LogDescription, ParamType } from 'ethers/lib/utils';
 import { pascalCase } from 'pascal-case';
 import { Gauge } from 'prom-client';
-import { EntityManager, DataSource } from 'typeorm';
 import { getEventData } from './event/getEventData';
 import xxhash, { XXHashAPI } from 'xxhash-wasm';
 import { BlockchainEventEntity } from './entity/BlockchainEventEntity';
+import { entityRegistry } from './entity-registry';
+import { LogContext } from '../core-module';
 
 export const GenericEventLogIndexerIdentifier =
   'GenericEventLogIndexerIdentifier';
@@ -20,8 +20,6 @@ export class GenericEventLogIndexer implements OnModuleInit {
   private xxhash: XXHashAPI;
 
   constructor(
-    @InjectEntityManager()
-    private entityManager: EntityManager,
     @InjectMetric('indexed_event') public indexedEventGauge: Gauge<string>,
   ) {}
 
@@ -58,8 +56,11 @@ export class GenericEventLogIndexer implements OnModuleInit {
     log: Log,
     event: LogDescription,
     blockTimestamp: number,
+    context: LogContext,
     isRemoved: boolean,
   ): Promise<void> {
+    const entityManager = context.entityManager;
+
     // raw, unparsed event log object
     this.logger.log(`${event.name} event received:\n${JSON.stringify(log)}`);
 
@@ -69,7 +70,13 @@ export class GenericEventLogIndexer implements OnModuleInit {
 
     // get an instance of the respective event repository class
     const eventEntityName = `${pascalCase(event.name)}Entity_${topicXXHash}`;
-    const eventRepository = this.entityManager.getRepository(eventEntityName);
+
+    // Check if this event type is registered for generic handling
+    if (!entityRegistry.isGenericEntity(eventEntityName)) {
+      return;
+    }
+
+    const eventRepository = entityManager.getRepository(eventEntityName);
 
     // if non-reorg then add else remove from db
     if (!isRemoved) {
@@ -114,6 +121,7 @@ export class GenericEventLogIndexer implements OnModuleInit {
   processBlockLog(
     logs: Array<Log>,
     blockTimestamp: number,
+    context: LogContext,
     areRemoved = false,
   ) {
     // console.log('processBlockLog', logs, blockTimestamp, areRemoved);

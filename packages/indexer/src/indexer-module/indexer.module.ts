@@ -1,4 +1,10 @@
-import { DynamicModule, Global, Module } from '@nestjs/common';
+import {
+  DynamicModule,
+  ForwardReference,
+  Global,
+  Module,
+  Type,
+} from '@nestjs/common';
 import { IndexerController } from './indexer.controller';
 import { Config, ConfigModule } from '../config-module';
 import { CoreModule } from '../core-module';
@@ -20,6 +26,7 @@ export interface IndexerConfig {
     disableRootController?: boolean;
     disableBlockMonitorController?: boolean;
     disableMetrics?: boolean;
+    disablePino?: boolean;
   };
 }
 
@@ -27,24 +34,42 @@ export interface IndexerConfig {
 @Module({})
 export class IndexerModule {
   static forRoot(indexerConfig: IndexerConfig): DynamicModule {
+    const imports: Array<
+      Type<any> | DynamicModule | Promise<DynamicModule> | ForwardReference
+    > = [];
+
+    const controllers: Array<Type<any>> = [];
+
+    // core imports
+    imports.push(
+      ConfigModule.register(indexerConfig.indexer),
+      DatabaseModule.forRoot(indexerConfig.database),
+      CoreModule.register({
+        disableBlockMonitorController:
+          indexerConfig.app?.disableBlockMonitorController,
+      }),
+      EthereumClientModule,
+      GenericIndexerModule.forRoot(),
+      GenericControllerModule.forEntities(),
+      // GraphQLAppModule.forRoot(),
+    );
+
+    if (!indexerConfig.app?.disableMetrics) {
+      imports.push(PrometheusModule.register());
+    }
+
+    if (!indexerConfig.app?.disablePino) {
+      imports.push(LoggerModule);
+    }
+
+    if (!indexerConfig.app?.disableRootController) {
+      controllers.push(IndexerController);
+    }
+
     return {
       module: IndexerModule,
-      imports: [
-        LoggerModule,
-        ConfigModule.register(indexerConfig.indexer),
-        DatabaseModule.forRoot(indexerConfig.database),
-        CoreModule,
-        EthereumClientModule,
-        // GenericIndexerModule.forRoot(),
-        // GenericControllerModule.forEntities(),
-        // GraphQLAppModule.forRoot(),
-        ...(indexerConfig.app?.disableMetrics
-          ? []
-          : [PrometheusModule.register()]),
-      ],
-      controllers: indexerConfig.app?.disableRootController
-        ? []
-        : [IndexerController],
+      imports,
+      controllers,
       exports: [ConfigModule, CoreModule, EthereumClientModule],
     };
   }

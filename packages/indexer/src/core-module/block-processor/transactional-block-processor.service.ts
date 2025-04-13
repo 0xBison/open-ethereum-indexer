@@ -3,8 +3,8 @@ import { EntityManager } from 'typeorm';
 import {
   SQLTransactionService,
   SQLTransactionServiceIdentifier,
-} from '../sql-transaction/sql-transaction.service';
-import { UndoOperation } from '../sql-transaction/types';
+} from '../../sql-transaction-module/sql-transaction.service';
+import { UndoOperation } from '../../sql-transaction-module/types';
 import { InjectEntityManager } from '@nestjs/typeorm';
 
 export const TransactionalBlockProcessorIdentifier =
@@ -45,7 +45,7 @@ export class TransactionalBlockProcessor {
 
     // Use the transaction method of EntityManager
     await this.entityManager.transaction(async (transactionalEntityManager) => {
-      this.logger.log(`Transaction started for block ${blockNumber}`);
+      this.logger.debug(`Transaction started for block ${blockNumber}`);
 
       this.transactionService.setTransactionEntityManager(
         transactionalEntityManager,
@@ -59,19 +59,19 @@ export class TransactionalBlockProcessor {
       this.transactionService.resetUndoOperations();
 
       // Store the block processing result and undo operations in the database
-      await this.entityManager.getRepository('BlockIndex').save({
+      await transactionalEntityManager.getRepository('BlockIndex').save({
         blockNumber,
         processedAt: new Date(),
         undoOperations: JSON.stringify(undoOps),
       });
 
       this.logger.log(`All operations processed for block ${blockNumber}`);
-      this.logger.log(`Undo operations: ${JSON.stringify(undoOps)}`);
+      this.logger.debug(`Undo operations: ${JSON.stringify(undoOps)}`);
 
       return undoOps;
     });
 
-    this.logger.log(`Transaction committed for block ${blockNumber}`);
+    this.logger.debug(`Transaction committed for block ${blockNumber}`);
   }
 
   /**
@@ -81,7 +81,10 @@ export class TransactionalBlockProcessor {
     await this.entityManager.transaction(async (transactionalEntityManager) => {
       this.logger.log(`Transaction started for reverting block ${blockNumber}`);
 
-      const undoOperations = await this.getUndoOperations(blockNumber);
+      const undoOperations = await this.getUndoOperations(
+        transactionalEntityManager,
+        blockNumber,
+      );
 
       this.logger.log(`Starting to revert block ${blockNumber}`);
       this.logger.log(
@@ -132,7 +135,7 @@ export class TransactionalBlockProcessor {
       }
 
       // Remove the block processing result and undo operations from the database
-      await this.entityManager
+      await transactionalEntityManager
         .getRepository('BlockIndex')
         .delete({ blockNumber });
 
@@ -145,10 +148,13 @@ export class TransactionalBlockProcessor {
   /**
    * Get undo operations for a specific block
    */
-  async getUndoOperations(blockNumber: number): Promise<UndoOperation[]> {
+  async getUndoOperations(
+    transactionalEntityManager: EntityManager,
+    blockNumber: number,
+  ): Promise<UndoOperation[]> {
     this.logger.log(`Getting undo operations for block ${blockNumber}`);
 
-    const blockIndex = await this.entityManager
+    const blockIndex = await transactionalEntityManager
       .getRepository('BlockIndex')
       .findOne({
         where: { blockNumber },

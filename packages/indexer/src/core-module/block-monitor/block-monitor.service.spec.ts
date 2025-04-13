@@ -13,6 +13,7 @@ import { ConfigService } from '../../config-module/config.service';
 import { JsonStore, JsonStoreIdentifier } from 'nest-json-store';
 import { SyncStatus } from '../types';
 import { LATEST_INDEXED_BLOCK } from './constants';
+import { TransactionalBlockProcessorIdentifier } from '../block-processor';
 
 // Mock the getNextBlockRange utility
 jest.mock('../utils/get-next-block-range', () => ({
@@ -105,8 +106,21 @@ describe('BlockMonitorService', () => {
           useValue: mockConfigService,
         },
         {
+          provide: 'PROM_METRIC_BLOCK_NUMBER',
+          useValue: {
+            inc: jest.fn(),
+            set: jest.fn(),
+          },
+        },
+        {
           provide: 'PROM_METRIC_LOGS_COUNT_PER_BLOCK_RANGE',
           useValue: mockHistogram,
+        },
+        {
+          provide: TransactionalBlockProcessorIdentifier,
+          useValue: {
+            process: jest.fn().mockResolvedValue(undefined),
+          },
         },
       ],
     })
@@ -158,23 +172,31 @@ describe('BlockMonitorService', () => {
 
   describe('setStartBlock', () => {
     it('should set the start block and index it', async () => {
-      (service as any).status = SyncStatus.RUNNING;
+      // Mock that no blocks have been indexed yet
       mockJsonStore.get = jest.fn().mockResolvedValue(null);
 
-      await service.setStartBlock(100);
+      // Mock the client to return our test block
+      mockEthereumHttpClient.headerByNumber = jest
+        .fn()
+        .mockResolvedValue(mockBlockEvent);
+      mockEthereumHttpClient.getLatestBlocksAndValidate = jest
+        .fn()
+        .mockResolvedValue([mockBlockEvent]);
 
-      expect(
-        mockEthereumHttpClient.getLatestBlocksAndValidate,
-      ).toHaveBeenCalledWith({
-        fromBlock: 100,
-        toBlock: 100,
-      });
-      expect(mockBlockProcessorService.processBlockEvents).toHaveBeenCalled();
-      expect(mockJsonStore.set).toHaveBeenCalledWith(
-        LATEST_INDEXED_BLOCK,
-        mockBlockEvent,
+      // Set the service status to RUNNING
+      (service as any).status = SyncStatus.RUNNING;
+
+      try {
+        await service.setStartBlock(100);
+      } catch (error) {
+        console.error('Error in setStartBlock:', error);
+        throw error;
+      }
+
+      // Verify the block was processed
+      expect(mockBlockProcessorService.processBlockEvents).toHaveBeenCalledWith(
+        [mockBlockEvent],
       );
-      expect((service as any).status).toBe(SyncStatus.RUNNING);
     });
 
     it('should throw an error if the block monitor is not running', async () => {

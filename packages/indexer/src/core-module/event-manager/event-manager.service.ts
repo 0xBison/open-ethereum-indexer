@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { matchesEventPattern } from './event-pattern-matcher';
 import {
   onBlockResponder,
@@ -9,6 +9,11 @@ import {
 import { ConfigService } from '../../config-module';
 import { LogDescription } from 'ethers/lib/utils';
 import { BlockEvent } from '../../types';
+import { ModuleRef } from '@nestjs/core';
+import {
+  SQLTransactionService,
+  SQLTransactionServiceIdentifier,
+} from '../../sql-transaction-module';
 
 export const EVENT_MANAGER_SERVICE = 'EVENT_MANAGER_SERVICE';
 
@@ -30,7 +35,12 @@ export class EventManagerService {
   private blockHandlers: onBlockResponder[] = [];
   private eventHandlers: EventHandler[] = [];
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private moduleRef: ModuleRef,
+    @Inject(SQLTransactionServiceIdentifier)
+    private transactionService: SQLTransactionService,
+  ) {
     // Copy static handlers to instance handlers
     this.blockHandlers = [...staticBlockHandlers];
     this.eventHandlers = [...staticEventHandlers];
@@ -79,9 +89,14 @@ export class EventManagerService {
    * @param payload - Data to be passed to the handlers
    */
   async emitBlockIndex(payload: BlockEvent): Promise<void> {
+    const entityManager = this.transactionService.getEntityManager();
+
     for (const handler of this.blockHandlers) {
       if (handler.onIndex) {
-        await handler.onIndex(payload);
+        await handler.onIndex(payload, {
+          moduleRef: this.moduleRef,
+          entityManager,
+        });
       }
     }
   }
@@ -91,9 +106,14 @@ export class EventManagerService {
    * @param payload - Data to be passed to the handlers
    */
   async emitBlockDeindex(payload: BlockEvent): Promise<void> {
+    const entityManager = this.transactionService.getEntityManager();
+
     for (const handler of this.blockHandlers) {
       if (handler.onDeindex) {
-        await handler.onDeindex(payload);
+        await handler.onDeindex(payload, {
+          moduleRef: this.moduleRef,
+          entityManager,
+        });
       }
     }
   }
@@ -103,6 +123,8 @@ export class EventManagerService {
    * @param payload - Data to be passed to the handlers
    */
   async emitEventIndex(payload: LogEvent): Promise<void> {
+    const entityManager = this.transactionService.getEntityManager();
+
     const { contractName, eventName } = this.getContractAndEventName(
       payload.log.address,
       payload.parsedEvent,
@@ -113,8 +135,10 @@ export class EventManagerService {
         matchesEventPattern(contractName, eventName, handler.pattern) &&
         handler.handlers.onIndex
       ) {
-        await handler.handlers.onIndex(payload);
-      } else {
+        await handler.handlers.onIndex(payload, {
+          moduleRef: this.moduleRef,
+          entityManager,
+        });
       }
     }
   }
@@ -129,12 +153,17 @@ export class EventManagerService {
       payload.parsedEvent,
     );
 
+    const entityManager = this.transactionService.getEntityManager();
+
     for (const handler of this.eventHandlers) {
       if (
         matchesEventPattern(contractName, eventName, handler.pattern) &&
         handler.handlers.onDeindex
       ) {
-        await handler.handlers.onDeindex(payload);
+        await handler.handlers.onDeindex(payload, {
+          moduleRef: this.moduleRef,
+          entityManager,
+        });
       }
     }
   }

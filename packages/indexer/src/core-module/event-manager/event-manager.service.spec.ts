@@ -5,6 +5,7 @@ import {
 } from './event-manager.service';
 import { LogEvent } from './types';
 import { ConfigService } from '../../config-module';
+import { SQLTransactionModule } from '../../sql-transaction-module';
 
 // Create contract addresses for testing
 const CONTRACT_ADDRESSES = {
@@ -35,6 +36,7 @@ describe('EventManagerService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
+      imports: [SQLTransactionModule],
       providers: [
         {
           provide: EVENT_MANAGER_SERVICE,

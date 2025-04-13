@@ -39,6 +39,7 @@ import { ethers } from 'ethers';
 import SomeContractAbi from './someContract/abis/SomeContract.json';
 import { InitialSchema1742274226041 } from './someContract/migrations/1742274226041-InitialSchema';
 import { EventManagerService } from '../src/core-module';
+import { entityRegistry } from '../src/generic-indexer-module/entity-registry';
 
 // Set this to true to use containerized node, false for local node
 const USE_CONTAINERIZED_NODE = true;
@@ -52,6 +53,33 @@ describe('Test event indexing of SomeContract - Exhaustive solidity event test s
   let contract: ethers.Contract;
   let dataSource: DataSource;
   let entityManager: EntityManager;
+
+  // Add this before the describe block
+  const entities = [
+    DynamicArrayEntity_439e6b8c,
+    DynamicArrayEntity_e56f559a,
+    DynamicStructArrayEntity_de916601,
+    EventWithDynamicArrayEntity_e56f559a,
+    EventWithFixedArrayEntity_696b4daf,
+    EventWithStructWithNestedStructEntity_4ec25295,
+    EventWithStructWithFixedStructArrayEntity_68e489fd,
+    EventWithStructWithDynamicStructArrayEntity_de916601,
+    EventWithStructWithArraysEntity_439e6b8c,
+    SimpleEventEntity_f9536490,
+    SimpleStructEntity_4ec25295,
+    StructArrayEntity_68e489fd,
+    TheStructEntity_439e6b8c,
+    TheStructEntity_4ec25295,
+    TheStructEntity_68e489fd,
+    TheStructEntity_de916601,
+    Uint64ArrayEntity_439e6b8c,
+    Uint64ArrayEntity_696b4daf,
+  ];
+
+  // Register all entities
+  entities.forEach((entity) => {
+    entityRegistry.registerGeneric(entity);
+  });
 
   const setup = async () => {
     try {
@@ -83,26 +111,6 @@ describe('Test event indexing of SomeContract - Exhaustive solidity event test s
           },
         },
         databaseConfig: {
-          entities: [
-            DynamicArrayEntity_439e6b8c,
-            DynamicArrayEntity_e56f559a,
-            DynamicStructArrayEntity_de916601,
-            EventWithDynamicArrayEntity_e56f559a,
-            EventWithFixedArrayEntity_696b4daf,
-            EventWithStructWithNestedStructEntity_4ec25295,
-            EventWithStructWithFixedStructArrayEntity_68e489fd,
-            EventWithStructWithDynamicStructArrayEntity_de916601,
-            EventWithStructWithArraysEntity_439e6b8c,
-            SimpleEventEntity_f9536490,
-            SimpleStructEntity_4ec25295,
-            StructArrayEntity_68e489fd,
-            TheStructEntity_439e6b8c,
-            TheStructEntity_4ec25295,
-            TheStructEntity_68e489fd,
-            TheStructEntity_de916601,
-            Uint64ArrayEntity_439e6b8c,
-            Uint64ArrayEntity_696b4daf,
-          ],
           migrations: [InitialSchema1742274226041],
         },
       };

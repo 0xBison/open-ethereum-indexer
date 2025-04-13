@@ -109,13 +109,6 @@ export class BlockProcessorService {
     blockTimestamp: number,
     areRemoved = false,
   ): Promise<void> {
-    // First emit block-level events
-    const blockPayload = {
-      logs,
-      blockTimestamp,
-      areRemoved,
-    };
-
     // Then process individual logs
     for (const log of logs) {
       const topicHash = log.topics[0];

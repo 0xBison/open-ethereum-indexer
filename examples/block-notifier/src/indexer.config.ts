@@ -10,7 +10,6 @@ export const indexerConfig: IndexerConfig = {
     contracts: {},
   },
   database: {
-    entities: entityRegistry.getAll(),
     migrations: [],
   },
   app: {

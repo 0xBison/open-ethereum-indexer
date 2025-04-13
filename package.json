@@ -5,14 +5,15 @@
   "description": "Open Ethereum Indexer Workspace",
   "scripts": {
     "build": "pnpm -r build",
+    "dev": "pnpm --parallel --filter \"./packages/**\" --filter \"./docs\" dev",
+    "dev:examples": "pnpm --parallel --filter \"./examples/**\" dev",
     "test": "pnpm --parallel --no-bail test",
     "test:watch": "pnpm --parallel test:watch",
     "test:coverage": "pnpm --parallel test:coverage",
     "test:e2e": "pnpm --parallel test:e2e",
     "test:e2e:indexer": "cd packages/indexer && pnpm test:e2e",
     "lint": "pnpm -r lint",
-    "format": "prettier --write \"**/*.{ts,js,json,md}\"",
-    "start:example": "cd examples/basic-example && pnpm start:dev"
+    "format": "prettier --write \"**/*.{ts,js,json,md}\""
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",

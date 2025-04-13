@@ -379,12 +379,10 @@ export class BlockMonitorService
   }
 
   private async setLatestBlock(block: BlockEvent) {
-    console.log('Setting latest block');
     this.cacheDatabase.set(LATEST_BLOCK, block);
   }
 
   private async setLatestIndexedBlock(block: BlockEvent) {
-    console.log('Setting latest indexed block');
     this.cacheDatabase.set(LATEST_INDEXED_BLOCK, block);
   }
 

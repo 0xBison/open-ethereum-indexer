@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
 import { BlockEvent } from '../types';
 import { Formatter } from '@ethersproject/providers';
@@ -21,11 +21,15 @@ export const EthereumHttpClientProviderIdentifier =
 @Injectable()
 export class EthereumHttpClient {
   private formatter: Formatter;
+  private readonly logger = new Logger(EthereumHttpClient.name);
 
   constructor(
     protected httpService: HttpService,
     private rpcUrl: string,
   ) {
+    this.logger.log(
+      `Initializing Ethereum HTTP client with RPC URL: ${rpcUrl}`,
+    );
     this.formatter = new Formatter();
   }
 
@@ -35,6 +39,8 @@ export class EthereumHttpClient {
    * @returns the latest block number in hex
    */
   async getLatestBlock(): Promise<string> {
+    this.logger.debug('Fetching latest block number');
+
     const getLatestBlockRequest = {
       jsonrpc: '2.0',
       method: 'eth_blockNumber',
@@ -49,6 +55,8 @@ export class EthereumHttpClient {
       headers: { 'Content-Type': 'application/json' },
     });
     const { data } = (await lastValueFrom(responseObservable)) as any;
+
+    this.logger.debug(`Received latest block number: ${data.result}`);
     return data.result;
   }
 
@@ -64,6 +72,8 @@ export class EthereumHttpClient {
     fromBlock: number,
     toBlock: number,
   ): Promise<BlockEvent[]> {
+    this.logger.debug(`Batch fetching blocks from ${fromBlock} to ${toBlock}`);
+
     const x = toBlock - fromBlock + 1;
 
     const blocksArray = Array(x)
@@ -100,6 +110,9 @@ export class EthereumHttpClient {
       },
     );
 
+    this.logger.debug(
+      `Retrieved ${blockEvents.length} blocks in batch operation`,
+    );
     return blockEvents;
   }
 
@@ -109,6 +122,10 @@ export class EthereumHttpClient {
    * @returns Block data
    */
   async getBlock(blockHashOrNumber: string | number): Promise<any> {
+    this.logger.debug(
+      `Fetching block by ${typeof blockHashOrNumber === 'number' ? 'number' : 'hash'}: ${blockHashOrNumber}`,
+    );
+
     const method =
       typeof blockHashOrNumber === 'string' &&
       blockHashOrNumber.startsWith('0x') &&
@@ -146,6 +163,9 @@ export class EthereumHttpClient {
       );
     }
 
+    this.logger.debug(
+      `Retrieved block ${data.result.hash} (number: ${data.result.number})`,
+    );
     return {
       hash: data.result.hash,
       parentHash: data.result.parentHash,
@@ -161,6 +181,8 @@ export class EthereumHttpClient {
    */
   async headerByNumber(number?: BigNumber): Promise<BlockEvent> {
     const blockParam = number ? number.toNumber() : 'latest';
+    this.logger.debug(`Fetching block header by number: ${blockParam}`);
+
     const blockData = await this.getBlock(blockParam);
 
     const blockEvent: BlockEvent = {
@@ -171,6 +193,9 @@ export class EthereumHttpClient {
       logs: [],
     };
 
+    this.logger.debug(
+      `Retrieved header for block ${blockEvent.hash} (number: ${blockEvent.number})`,
+    );
     return blockEvent;
   }
 
@@ -180,6 +205,8 @@ export class EthereumHttpClient {
    * @returns BlockEvent
    */
   async headerByHash(hash: string): Promise<BlockEvent> {
+    this.logger.debug(`Fetching block header by hash: ${hash}`);
+
     const blockData = await this.getBlock(hash);
 
     const blockEvent: BlockEvent = {
@@ -190,6 +217,9 @@ export class EthereumHttpClient {
       logs: [],
     };
 
+    this.logger.debug(
+      `Retrieved header for block ${blockEvent.hash} (number: ${blockEvent.number})`,
+    );
     return blockEvent;
   }
 
@@ -202,6 +232,10 @@ export class EthereumHttpClient {
     fromBlock: number;
     toBlock: number;
   }): Promise<BlockEvent[]> {
+    this.logger.debug(
+      `Fetching and validating blocks from ${blockRange.fromBlock} to ${blockRange.toBlock}`,
+    );
+
     const { fromBlock, toBlock } = blockRange;
 
     const blocks = await this.batchGetLatestBlocksWithoutLogs(
@@ -221,6 +255,9 @@ export class EthereumHttpClient {
       }
     }
 
+    this.logger.debug(
+      `Successfully validated chain of ${blocks.length} blocks`,
+    );
     return blocks;
   }
 
@@ -230,6 +267,13 @@ export class EthereumHttpClient {
    * @returns Array of logs
    */
   async filterLogs(filter: FilterLogs): Promise<Array<Log>> {
+    this.logger.debug(
+      `Fetching logs from block ${filter.fromBlock} to ${filter.toBlock} with ${filter.topics.length} topic filters`,
+    );
+    if (filter.addresses) {
+      this.logger.debug(`Filtering by ${filter.addresses.length} addresses`);
+    }
+
     const { fromBlock, toBlock, topics } = filter;
 
     const fromBlockHex = `0x${fromBlock.toString(16)}`;
@@ -263,6 +307,9 @@ export class EthereumHttpClient {
       this.formatter.filterLog.bind(this.formatter),
     )(logs);
 
+    this.logger.debug(
+      `Retrieved ${formattedResult.length} logs matching filter criteria`,
+    );
     return formattedResult;
   }
 
@@ -281,6 +328,10 @@ export class EthereumHttpClient {
     addresses?: string[];
     validRange: { startBlock: number; endBlock: number };
   }> {
+    this.logger.debug(
+      `Finding relevant topic filters for blocks ${blockRange.fromBlock} to ${blockRange.toBlock}`,
+    );
+
     const topicFilters: Array<{
       topic: string;
       addresses?: string[];
@@ -364,6 +415,9 @@ export class EthereumHttpClient {
       }
     }
 
+    this.logger.debug(
+      `Found ${topicFilters.length} relevant topic filters for block range`,
+    );
     return topicFilters;
   }
 
@@ -382,6 +436,10 @@ export class EthereumHttpClient {
       validRange: { startBlock: number; endBlock: number };
     }>,
   ): Promise<Array<Log>> {
+    this.logger.debug(
+      `Enhanced filter logs for blocks ${blockRange.fromBlock} to ${blockRange.toBlock} with ${topicFilters.length} filters`,
+    );
+
     // If no topic filters, return empty array
     if (topicFilters.length === 0) {
       return [];
@@ -416,7 +474,7 @@ export class EthereumHttpClient {
     });
 
     // Filter logs based on topic-specific block ranges
-    return logs.filter((log) => {
+    const filteredLogs = logs.filter((log) => {
       // Find the matching topic filter
       const matchingFilter = topicFilters.find(
         (filter) =>
@@ -436,6 +494,15 @@ export class EthereumHttpClient {
 
       return true;
     });
+
+    this.logger.debug(
+      `Filtered to ${filteredLogs.length} logs after initial query`,
+    );
+
+    this.logger.debug(
+      `Returned ${filteredLogs.length} logs after additional filtering`,
+    );
+    return filteredLogs;
   }
 
   /**
@@ -449,6 +516,10 @@ export class EthereumHttpClient {
     blockRange: { fromBlock: number; toBlock: number },
     eventTopicList: TopicList,
   ): Promise<Array<Log>> {
+    this.logger.debug(
+      `Getting filtered logs for block range ${blockRange.fromBlock} to ${blockRange.toBlock}`,
+    );
+
     // Get relevant topic filters for this block range
     const topicFilters = this.getRelevantTopicFilters(
       eventTopicList,
@@ -456,7 +527,9 @@ export class EthereumHttpClient {
     );
 
     // Use enhanced filter logs to get and filter the logs
-    return this.enhancedFilterLogs(blockRange, topicFilters);
+    const logs = await this.enhancedFilterLogs(blockRange, topicFilters);
+    this.logger.debug(`Retrieved ${logs.length} filtered logs for block range`);
+    return logs;
   }
 
   /**
@@ -464,6 +537,8 @@ export class EthereumHttpClient {
    * @returns Current gas price in wei as bigint
    */
   async getGasPrice(): Promise<bigint> {
+    this.logger.debug('Fetching current gas price');
+
     const gasPriceRequest = {
       jsonrpc: '2.0',
       method: 'eth_gasPrice',
@@ -484,6 +559,7 @@ export class EthereumHttpClient {
       throw new Error('Failed to fetch gas price');
     }
 
+    this.logger.debug(`Current gas price: ${data.result}`);
     return BigInt(data.result);
   }
 
