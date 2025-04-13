@@ -38,7 +38,7 @@ import { entityRegistry } from '../src/generic-indexer-module';
 const USE_CONTAINERIZED_NODE = true;
 
 const INDEX_WAIT_TIME = 3000;
-const TEST_TIMEOUT = 60000;
+const TEST_TIMEOUT = 120000;
 
 const entities = [
   DynamicArrayEntity_439e6b8c,

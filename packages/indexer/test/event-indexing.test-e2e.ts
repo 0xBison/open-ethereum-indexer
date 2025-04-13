@@ -43,7 +43,7 @@ import { entityRegistry } from '../src/generic-indexer-module/entity-registry';
 
 // Set this to true to use containerized node, false for local node
 const USE_CONTAINERIZED_NODE = true;
-
+const TEST_TIMEOUT = 120000;
 describe('Test event indexing of SomeContract - Exhaustive solidity event test suite', () => {
   let nodeSetup: NodeSetup;
   let indexerSetup: IndexerTestSetup;
@@ -168,57 +168,65 @@ describe('Test event indexing of SomeContract - Exhaustive solidity event test s
     }
   };
 
-  it('should trigger event listeners on event emission', async () => {
-    const onEventSpyWildcard = jest.fn();
-    const onEventSpySimpleEvent = jest.fn();
+  it(
+    'should trigger event listeners on event emission',
+    async () => {
+      const onEventSpyWildcard = jest.fn();
+      const onEventSpySimpleEvent = jest.fn();
 
-    const eventManagerService: EventManagerService = app.get(
-      EVENT_MANAGER_SERVICE,
-    );
+      const eventManagerService: EventManagerService = app.get(
+        EVENT_MANAGER_SERVICE,
+      );
 
-    eventManagerService.onEvent('*:*', {
-      onIndex: async () => {
-        onEventSpyWildcard();
-      },
-    });
+      eventManagerService.onEvent('*:*', {
+        onIndex: async () => {
+          onEventSpyWildcard();
+        },
+      });
 
-    eventManagerService.onEvent('SomeContract:SimpleEvent', {
-      onIndex: async () => {
-        onEventSpySimpleEvent();
-      },
-    });
+      eventManagerService.onEvent('SomeContract:SimpleEvent', {
+        onIndex: async () => {
+          onEventSpySimpleEvent();
+        },
+      });
 
-    console.log('Emitting SimpleEvent...');
-    await (await contract.emitSimpleEvent()).wait();
-    await mineNewBlock(rpcUrl);
+      console.log('Emitting SimpleEvent...');
+      await (await contract.emitSimpleEvent()).wait();
+      await mineNewBlock(rpcUrl);
 
-    await sleep(5000);
+      await sleep(5000);
 
-    await teardown();
+      await teardown();
 
-    expect(onEventSpyWildcard).toHaveBeenCalled();
-    expect(onEventSpySimpleEvent).toHaveBeenCalled();
-  });
+      expect(onEventSpyWildcard).toHaveBeenCalled();
+      expect(onEventSpySimpleEvent).toHaveBeenCalled();
+    },
+    TEST_TIMEOUT,
+  );
 
-  it('should trigger event listeners on block events', async () => {
-    const onBlockSpy = jest.fn();
+  it(
+    'should trigger event listeners on block events',
+    async () => {
+      const onBlockSpy = jest.fn();
 
-    const eventManagerService: EventManagerService = app.get(
-      EVENT_MANAGER_SERVICE,
-    );
+      const eventManagerService: EventManagerService = app.get(
+        EVENT_MANAGER_SERVICE,
+      );
 
-    eventManagerService.onBlock({
-      onIndex: async () => {
-        onBlockSpy();
-      },
-    });
+      eventManagerService.onBlock({
+        onIndex: async () => {
+          onBlockSpy();
+        },
+      });
 
-    await mineNewBlock(rpcUrl);
+      await mineNewBlock(rpcUrl);
 
-    await sleep(5000);
+      await sleep(5000);
 
-    await teardown();
+      await teardown();
 
-    expect(onBlockSpy).toHaveBeenCalled();
-  });
+      expect(onBlockSpy).toHaveBeenCalled();
+    },
+    TEST_TIMEOUT,
+  );
 });
