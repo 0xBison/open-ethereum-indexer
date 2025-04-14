@@ -7,6 +7,8 @@ on:
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -33,10 +35,42 @@ jobs:
       - name: Run E2E tests
         run: pnpm test:e2e:indexer
 
-      # Change directory to indexer package before publishing
+      # Configure Git
+      - name: Configure Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      # Use release tag version instead of auto-bumping
+      - name: Set version from release tag
+        run: |
+          echo "📦 Setting version from release tag..."
+          cd packages/indexer
+          # Strip the 'v' prefix if present (v1.0.0 -> 1.0.0)
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "🏷️ Release tag version: $VERSION"
+          # Update package.json version
+          npm version $VERSION --no-git-tag-version --allow-same-version
+          echo "✅ Updated package.json to version $VERSION"
+
       - name: Publish indexer package
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
         run: |
+          echo "📤 Publishing package to npm..."
           cd packages/indexer
           pnpm publish --no-git-checks --access public
+          echo "✅ Successfully published to npm!"
+
+      # Commit the version change after successful publish
+      - name: Commit version change
+        run: |
+          echo "💾 Committing version change to repository..."
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add packages/indexer/package.json
+          echo "📝 Current changes to be committed:"
+          git diff --cached
+          git commit -m "chore: update package version to match release [skip ci]"
+          git push origin HEAD:main
+          echo "✅ Successfully pushed version change to main branch"
