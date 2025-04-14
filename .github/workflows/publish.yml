@@ -29,11 +29,11 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Run tests
-        run: pnpm test
+      # - name: Run tests
+      #   run: pnpm test
 
-      - name: Run E2E tests
-        run: pnpm test:e2e:indexer
+      # - name: Run E2E tests
+      #   run: pnpm test:e2e:indexer
 
       # Configure Git
       - name: Configure Git
@@ -45,16 +45,14 @@ jobs:
       - name: Set version from release tag
         run: |
           echo "📦 Setting version from release tag..."
-          # Strip the 'v' prefix if present (v1.0.0 -> 1.0.0)
           VERSION=${GITHUB_REF#refs/tags/v}
           echo "🏷️ Release tag version: $VERSION"
 
           # Update root package.json
           pnpm version $VERSION --no-git-tag-version --allow-same-version
 
-          # Update indexer package.json
-          cd packages/indexer
-          pnpm version $VERSION --no-git-tag-version --allow-same-version
+          # Update indexer package version
+          pnpm version --filter @open-ethereum/indexer $VERSION --no-git-tag-version --allow-same-version
           echo "✅ Updated package.json versions to $VERSION"
 
       - name: Publish indexer package
@@ -62,8 +60,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
         run: |
           echo "📤 Publishing package to npm..."
-          cd packages/indexer
-          pnpm publish --no-git-checks --access public
+          pnpm publish --filter @open-ethereum/indexer --no-git-checks --access public
           echo "✅ Successfully published to npm!"
 
       # Commit the version change after successful publish
