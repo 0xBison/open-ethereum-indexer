@@ -45,12 +45,13 @@ jobs:
       - name: Set version from release tag
         run: |
           echo "📦 Setting version from release tag..."
-          VERSION=${GITHUB_REF#refs/tags/v}
+          # Get just the tag name (0.0.2) from refs/tags/0.0.2
+          VERSION=$(echo $GITHUB_REF | cut -d/ -f3)
           echo "🏷️ Release tag version: $VERSION"
 
           cd packages/indexer
           # Update version using jq (ensure no 'v' prefix)
-          jq ".version = \"${VERSION#v}\"" package.json > package.json.tmp && mv package.json.tmp package.json
+          jq ".version = \"$VERSION\"" package.json > package.json.tmp && mv package.json.tmp package.json
           echo "✅ Updated package.json version to $VERSION"
 
       - name: Publish indexer package
@@ -59,7 +60,7 @@ jobs:
         run: |
           echo "📤 Publishing package to npm..."
           cd packages/indexer
-          npm publish --no-git-checks --access public
+          npm publish --access public
           echo "✅ Successfully published to npm!"
 
       # Commit the version change after successful publish
