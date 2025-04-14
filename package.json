@@ -1,7 +1,7 @@
 {
   "name": "open-ethereum-indexer-workspace",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Open Ethereum Indexer Workspace",
   "scripts": {
     "build": "pnpm -r build",
