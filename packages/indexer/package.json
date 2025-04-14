@@ -4,6 +4,9 @@
   "description": "Open Ethereum Indexer",
   "private": false,
   "license": "UNLICENSED",
+  "files": [
+    "dist"
+  ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {

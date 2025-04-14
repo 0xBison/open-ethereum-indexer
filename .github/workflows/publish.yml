@@ -48,19 +48,18 @@ jobs:
           VERSION=${GITHUB_REF#refs/tags/v}
           echo "🏷️ Release tag version: $VERSION"
 
-          # Update root package.json
-          pnpm version $VERSION --no-git-tag-version --allow-same-version
-
-          # Update indexer package version
-          pnpm version --filter @open-ethereum/indexer $VERSION --no-git-tag-version --allow-same-version
-          echo "✅ Updated package.json versions to $VERSION"
+          cd packages/indexer
+          # Update version using jq (ensure no 'v' prefix)
+          jq ".version = \"${VERSION#v}\"" package.json > package.json.tmp && mv package.json.tmp package.json
+          echo "✅ Updated package.json version to $VERSION"
 
       - name: Publish indexer package
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
         run: |
           echo "📤 Publishing package to npm..."
-          pnpm publish --filter @open-ethereum/indexer --no-git-checks --access public
+          cd packages/indexer
+          pnpm publish --no-git-checks --access public
           echo "✅ Successfully published to npm!"
 
       # Commit the version change after successful publish
