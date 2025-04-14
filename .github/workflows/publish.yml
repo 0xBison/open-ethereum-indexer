@@ -59,7 +59,7 @@ jobs:
         run: |
           echo "📤 Publishing package to npm..."
           cd packages/indexer
-          pnpm publish --no-git-checks --access public
+          npm publish --no-git-checks --access public
           echo "✅ Successfully published to npm!"
 
       # Commit the version change after successful publish
