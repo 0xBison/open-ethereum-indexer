@@ -1,5 +1,5 @@
 {
-  "name": "swagger-setup",
+  "name": "wildcard-transfer",
   "version": "0.0.1",
   "description": "",
   "author": "",
@@ -23,10 +23,13 @@
     "@nestjs/common": "^11.0.1",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/typeorm": "^11.0.0",
     "@open-ethereum/indexer": "workspace:^",
+    "@willsoto/nestjs-prometheus": "^6.0.2",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "typeorm": "^0.3.20"
+    "typeorm": "^0.3.20",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

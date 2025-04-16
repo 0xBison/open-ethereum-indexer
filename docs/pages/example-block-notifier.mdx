@@ -1,6 +1,11 @@
 # Block Notifier Example
 
-This guide explores the Block Notifier example, which demonstrates how to monitor for specific blocks on the Ethereum blockchain and send notifications via Telegram. This example shows a practical real-world application of the Open Ethereum Indexer.
+This example demonstrates how to listen for specific block events - in this case, monitoring for blocks that are a multiple of 1,000,000 (millionth blocks) and sending notifications via Telegram.
+
+- Connects to an Ethereum node via RPC
+- Monitors incoming blocks
+- Detects when a block number is a multiple of 1,000,000
+- Sends a notification to a Telegram channel when a millionth block is found
 
 You can see an example of a telegram channel with some test block notifications [here](https://t.me/ethereum_million_blocks).
 
@@ -190,29 +195,17 @@ import { IndexerConfig } from '@open-ethereum/indexer';
 
 export const indexerConfig: IndexerConfig = {
   indexer: {
-    name: 'block-notifier',
-    chains: {
-      mainnet: {
-        rpcUrl:
-          process.env.RPC_URL ||
-          'https://eth-mainnet.g.alchemy.com/v2/your-api-key',
-      },
+    network: {
+      rpcUrl: process.env.NODE_RPC_URL,
+      chainId: parseInt(process.env.CHAIN_ID),
     },
-    contracts: {}, // No specific contracts needed
-    blockMonitor: {
-      sleepInterval: Number(process.env.SLEEP_INTERVAL) || 1000,
-      maxBlocksPerQuery: Number(process.env.MAX_BLOCKS_PER_QUERY) || 10,
-    },
+    contracts: {},
   },
   database: {
-    type: 'postgres',
-    host: process.env.SQL_HOST || 'localhost',
-    port: Number(process.env.SQL_PORT) || 5432,
-    username: process.env.SQL_USERNAME || 'postgres',
-    password: process.env.SQL_PASSWORD || 'password',
-    database: process.env.SQL_DB || 'block_notifier',
-    synchronize: true,
-    logging: false,
+    migrations: [],
+  },
+  app: {
+    disableMetrics: true,
   },
 };
 ```
@@ -290,12 +283,3 @@ You could extend this example in several ways:
 - Add a web dashboard to view notification history
 - Support multiple notification channels (email, Discord, Slack, etc.)
 - Configure different notification criteria through a web interface
-
-## Next Steps
-
-After understanding this example, you might want to explore:
-
-- [Event Indexing](/event-indexing) to also track specific smart contract events
-- [Metrics & Monitoring](/metrics) to add more comprehensive monitoring
-- [Subscriptions](/subscriptions) to understand advanced handler registration patterns
-- [Configuration](/configuration) to learn about all available configuration options

@@ -27,7 +27,9 @@
       "type": "separator"
     },
     "example-basic": "Basic Example",
-    "example-block-notifier": "Block Notifier",
+    "example-block-notifier": "Block Notifier Example",
+    "example-proxy-contract": "Proxy Contract Example",
+    "example-wildcard-transfer": "Wildcard Transfer Example",
     "support-the-project": {
       "title": "Support the Project",
       "type": "separator"
