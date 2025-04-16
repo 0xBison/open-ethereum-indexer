@@ -1,6 +1,6 @@
 {
   "name": "@open-ethereum/indexer",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "Open Ethereum Indexer",
   "private": false,
   "license": "UNLICENSED",

@@ -113,20 +113,13 @@ describe('BlockMonitorService', () => {
           },
         },
         {
-          provide: 'PROM_METRIC_LOGS_COUNT_PER_BLOCK_RANGE',
-          useValue: mockHistogram,
-        },
-        {
           provide: TransactionalBlockProcessorIdentifier,
           useValue: {
             process: jest.fn().mockResolvedValue(undefined),
           },
         },
       ],
-    })
-      .overrideProvider('PROM_METRIC_LOGS_COUNT_PER_BLOCK_RANGE')
-      .useValue(mockHistogram)
-      .compile();
+    }).compile();
 
     service = module.get<BlockMonitorService>(BlockMonitorService);
 

@@ -1,15 +1,12 @@
-name: CI
+name: Pull Request Checks
 
 on:
-  push:
-    branches: [main]
   pull_request:
-    branches: [main]
+    types: [opened, synchronize, reopened]
 
 jobs:
-  build-and-test:
+  validate-pr:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
@@ -47,3 +44,17 @@ jobs:
 
       - name: Run E2E tests
         run: pnpm test:e2e:indexer
+
+      - name: Validate package version
+        run: |
+          echo "🔍 Checking package version..."
+          cd packages/indexer
+          CURRENT_VERSION=$(jq -r .version package.json)
+          echo "📦 Current version: $CURRENT_VERSION"
+
+          # Ensure version follows semver
+          if ! [[ $CURRENT_VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$ ]]; then
+            echo "❌ Invalid version format: $CURRENT_VERSION"
+            exit 1
+          fi
+          echo "✅ Version format is valid"
