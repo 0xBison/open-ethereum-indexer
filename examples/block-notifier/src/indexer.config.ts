@@ -1,5 +1,4 @@
 import { IndexerConfig } from '@open-ethereum/indexer';
-import { entityRegistry } from '@open-ethereum/indexer';
 
 export const indexerConfig: IndexerConfig = {
   indexer: {

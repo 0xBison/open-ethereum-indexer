@@ -5,9 +5,7 @@ This example demonstrates a simple indexer configuration for monitoring USDT tra
 ## Key Components
 
 ### 1. Configuration
-
 The example uses a straightforward configuration that:
-
 - Targets the USDT contract (`0xdac17f958d2ee523a2206206994597c13d831ec7`)
 - Focuses on a specific block range (22215331)
 - Filters out all events except Transfer events
@@ -52,9 +50,7 @@ export const indexerConfig: IndexerConfig = {
 ```
 
 ### 2. Event Filtering
-
 Shows how to:
-
 - Focus on specific events by excluding others using `excludeEvents`
 - Monitor a precise block range for testing/demonstration
 - Configure basic application settings
@@ -69,20 +65,17 @@ Shows how to:
 ## Setup and Usage
 
 1. Copy `.env.example` to `.env` and configure:
-
 ```env
 NODE_RPC_URL=<your-ethereum-node-url>
 NODE_CHAIN_ID=1
 ```
 
 2. Install dependencies:
-
 ```bash
 pnpm install
 ```
 
 3. Run the indexer:
-
 ```bash
 pnpm start
 ```

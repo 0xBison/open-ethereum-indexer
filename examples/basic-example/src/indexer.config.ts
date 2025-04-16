@@ -25,7 +25,6 @@ export const indexerConfig: IndexerConfig = {
           'Unpause',
         ],
         startBlock: 22215331,
-        endBlock: 22215331,
       },
     },
   },
