@@ -1,6 +1,6 @@
 # GraphQL Support
 
-> GraphQL support is currently experimental and only works with generic entities (those created through the generic indexing system). Custom entities and blocks are not yet supported.
+> GraphQL support is currently experimental and only works with generic entities (those created through the generic indexing system). Nested entities are not yet supported.
 
 Open Ethereum Indexer provides built-in GraphQL support, allowing you to query your indexed data using GraphQL. This page explains how to enable and use the GraphQL API in your indexer application.
 
@@ -29,3 +29,65 @@ http://localhost:3050/graphql
 Replace `3050` with your configured port if different.
 
 > **Note**: The GraphQL playground can be disabled via the `disableGraphqlPlayground` configuration option while keeping the GraphQL API endpoint active.
+
+## Available Queries
+
+### Block Queries
+
+The following queries are available for accessing block data:
+
+```graphql
+# Get the latest indexed block
+query GetLatestBlock {
+  latestBlock {
+    id
+    blockNumber
+    processedAt
+  }
+}
+
+# Get a specific block by number
+query GetBlock {
+  block(blockNumber: 1234567) {
+    id
+    blockNumber
+    processedAt
+  }
+}
+
+# Get a paginated list of blocks
+query GetBlocks {
+  blocks(limit: 10, offset: 0) {
+    id
+    blockNumber
+    processedAt
+  }
+}
+```
+
+### Event Queries
+
+For each event type you index, the following queries are automatically generated:
+
+```graphql
+# Example for a Transfer event
+query GetTransfers {
+  Transfer(limit: 10, offset: 0) {
+    uniqueEventId
+    eventOriginAddress
+    blockNumber
+    blockTimestamp
+    transactionHash
+    logIndex
+    from
+    to
+    value
+  }
+}
+```
+
+Each event query supports:
+
+- `limit`: Number of records to return (default: 10)
+- `offset`: Number of records to skip (default: 0)
+- `filter`: Optional filters for specific fields
