@@ -1,0 +1,256 @@
+# API Reference
+
+A built-in REST API is automatically provided in your application for accessing indexed blockchain data. This page documents the available endpoints and how to use them.
+Before we get into the details of the API, lets remind ourselves how to register entities with the indexer.
+
+## Registering Entities
+
+To register an entity with the indexer, you need to do the following:
+
+```typescript
+import { EntityRegistry } from '@open-ethereum/indexer';
+import { Transfer } from './entities/Transfer.entity';
+
+const entityRegistry = new EntityRegistry();
+entityRegistry.register(Transfer);
+```
+
+or if its a [generic entity](/generic-indexing), you can use the `registerGeneric` method:
+
+```typescript
+entityRegistry.registerGeneric(Transfer);
+```
+
+Once entities are registered, the indexer will automatically generate endpoints for them.
+
+## Swagger API Documentation
+
+To configure swagger, you need to call the `setupSwagger` function with the NestJS app instance like so:
+
+```typescript
+import { NestFactory } from '@nestjs/core';
+import { setupSwagger } from '@open-ethereum/indexer';
+import { AppModule } from './app.module';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+
+  // Setup Swagger
+  setupSwagger(app);
+
+  await app.listen(3000);
+}
+bootstrap();
+```
+
+You can access the swagger UI at `http://localhost:3050/api-docs` but will also need to enable CORS (shown below) to be able to send requests from swagger UI.
+
+## CORS Configuration
+
+If your API will be accessed from a browser on a different domain, you need to configure CORS:
+
+```typescript
+// src/main.ts
+import { NestFactory } from '@nestjs/core';
+import { setupSwagger } from '@open-ethereum/indexer';
+import { AppModule } from './app.module';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+
+  // Configure CORS
+  app.enableCors({
+    origin: ['http://localhost:3050', 'https://yourdomain.com'],
+    methods: ['GET', 'POST'],
+  });
+
+  // Setup Swagger
+  setupSwagger(app);
+
+  await app.listen(3000);
+}
+bootstrap();
+```
+
+To enable CORS for all origins and methods, you can use:
+
+```typescript
+app.enableCors({
+  origin: '*',
+  methods: '*',
+});
+```
+
+## API Overview
+
+The indexer automatically exposes several REST API endpoints grouped by functionality:
+
+### Indexer Administration Endpoints
+
+- `GET /config` - Get the current indexer configuration
+- `GET /blockProcessingDetails` - Get details about block processing status
+- `GET /status` - Get the current indexer status
+- `GET /start` - Start the indexer
+- `GET /stop` - Stop the indexer
+
+### Event Endpoints
+
+- `GET /events` - Get a list of all registered entities/events
+- `GET /events/{eventName}` - Get all instances of a specific event
+- `GET /events/{eventName}/{id}` - Get a specific event instance by ID
+
+For example, if you're indexing Transfer events, the following endpoints would be available:
+
+```
+GET /events/Transfer_fab013d9      # Get all Transfer events
+GET /events/Transfer_fab013d9/{id} # Get a specific Transfer event
+```
+
+Note: The suffix after the event name (e.g., `_fab013d9`) is a unique identifier generated for each event type to prevent naming conflicts. This is particularly important when indexing similar events from different contracts.
+
+### Metrics Endpoint
+
+- `GET /metrics` - Prometheus-compatible metrics endpoint
+
+## Accessing the API Documentation
+
+The API documentation is available through Swagger UI and can be accessed at:
+
+```
+http://localhost:3050/api-docs
+```
+
+The raw OpenAPI specification is available at:
+
+```
+http://localhost:3050/api-docs-json
+```
+
+## Event API Structure
+
+For each event type you index, the following endpoints are automatically generated:
+
+1. A collection endpoint (`/events/{eventName}`) that returns all instances of that event
+2. A single-item endpoint (`/events/{eventName}/{id}`) for retrieving specific events
+
+The event data includes all the standard fields:
+
+- `uniqueEventId`
+- `eventOriginAddress`
+- `blockNumber`
+- `blockTimestamp`
+- `transactionHash`
+- `logIndex`
+- `txIndex`
+- `topics`
+- `logData`
+
+Plus any specific fields from your event's structure.
+
+## API Tags
+
+The endpoints are organized into the following tags in the Swagger documentation:
+
+- `Indexer Administration` - Configuration and control endpoints
+- `Events` - General event listing endpoint
+- `Events|{EventName}` - Event-specific endpoints
+- `Prometheus` - Metrics endpoint
+
+## Using the API
+
+Example of querying Transfer events:
+
+```bash
+# Get all Transfer events
+curl http://localhost:3050/events/Transfer_fab013d9
+
+# Get a specific Transfer event
+curl http://localhost:3050/events/Transfer_fab013d9/123
+
+# Get indexer status
+curl http://localhost:3050/status
+
+# Get list of all indexed events
+curl http://localhost:3050/events
+```
+
+Remember to enable CORS if you're accessing these endpoints from a browser application, as shown in the CORS Configuration section above.
+
+## Custom API Controllers
+
+You can extend the API with your own custom controllers:
+
+```typescript
+// src/controllers/custom.controller.ts
+import { Controller, Get, Query } from '@nestjs/common';
+import { getRepository } from 'typeorm';
+import { Transfer } from '../entities/Transfer.entity';
+
+@Controller('custom')
+export class CustomController {
+  @Get('largest-transfers')
+  async getLargestTransfers(@Query('limit') limit: number = 10) {
+    const transferRepo = getRepository(Transfer);
+
+    const transfers = await transferRepo.find({
+      order: {
+        value: 'DESC',
+      },
+      take: limit,
+    });
+
+    return transfers;
+  }
+}
+```
+
+Then, register your controller in your application module:
+
+```typescript
+// src/app.module.ts
+import { Module } from '@nestjs/common';
+import { IndexerModule } from '@open-ethereum/indexer';
+import { CustomController } from './controllers/custom.controller';
+import { indexerConfig } from './indexer.config';
+import './subscriptions';
+
+@Module({
+  imports: [IndexerModule.forRoot(indexerConfig)],
+  controllers: [CustomController],
+})
+export class AppModule {}
+```
+
+## API Security
+
+By default, the API does not include authentication. In a production environment, you should add authentication:
+
+```typescript
+// src/main.ts
+import { NestFactory } from '@nestjs/core';
+import { setupSwagger } from '@open-ethereum/indexer';
+import { AppModule } from './app.module';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+
+  // Add API key authentication middleware
+  app.use((req, res, next) => {
+    const apiKey = req.headers['x-api-key'];
+    if (!apiKey || apiKey !== process.env.API_KEY) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+    next();
+  });
+
+  // Setup Swagger
+  setupSwagger(app);
+
+  await app.listen(3000);
+}
+bootstrap();
+```
+
+## GraphQL API
+
+In addition to the REST API, the indexer also supports GraphQL. See the [GraphQL](/graphql) section for details.

@@ -41,8 +41,6 @@ export class BlockMonitorService
   private status: SyncStatus;
 
   constructor(
-    @InjectMetric('logs_count_per_block_range')
-    public logsCountPerBlockRange: Histogram<string>,
     @Inject(EthereumHttpClientProviderIdentifier)
     private client: EthereumHttpClient,
     @Inject(BlockProcessorServiceIdentifier)
@@ -361,11 +359,6 @@ export class BlockMonitorService
       ...blockRange,
       topics: [topics],
     });
-
-    this.logsCountPerBlockRange.observe(
-      { block_range: blockRange.toBlock - blockRange.fromBlock + 1 },
-      logs.length,
-    );
 
     return logs;
   }

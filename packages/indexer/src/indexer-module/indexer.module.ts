@@ -27,6 +27,8 @@ export interface IndexerConfig {
     disableBlockMonitorController?: boolean;
     disableMetrics?: boolean;
     disablePino?: boolean;
+    disableGraphqlPlayground?: boolean;
+    disableGraphql?: boolean;
   };
 }
 
@@ -51,7 +53,6 @@ export class IndexerModule {
       EthereumClientModule,
       GenericIndexerModule.forRoot(),
       GenericControllerModule.forEntities(),
-      // GraphQLAppModule.forRoot(),
     );
 
     if (!indexerConfig.app?.disableMetrics) {
@@ -60,6 +61,14 @@ export class IndexerModule {
 
     if (!indexerConfig.app?.disablePino) {
       imports.push(LoggerModule);
+    }
+
+    if (!indexerConfig.app?.disableGraphql) {
+      imports.push(
+        GraphQLAppModule.forRoot({
+          disablePlayground: indexerConfig.app?.disableGraphqlPlayground,
+        }),
+      );
     }
 
     if (!indexerConfig.app?.disableRootController) {

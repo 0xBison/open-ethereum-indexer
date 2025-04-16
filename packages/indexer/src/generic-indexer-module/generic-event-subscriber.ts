@@ -76,9 +76,6 @@ export class GenericEventSubscriber
   ): Promise<void> {
     const entityManager = context.entityManager;
 
-    // raw, unparsed event log object
-    this.logger.log(`${event.name} event received:\n${JSON.stringify(log)}`);
-
     // get the xxHash of the event topic, and use it to form the name of the
     // event repository
     const topicXXHash = this.xxhash.h32ToString(event.topic);
@@ -90,6 +87,8 @@ export class GenericEventSubscriber
     if (!entityRegistry.isGenericEntity(eventEntityName)) {
       return;
     }
+    // raw, unparsed event log object
+    this.logger.log(`${event.name} event received:\n${JSON.stringify(log)}`);
 
     const eventRepository = entityManager.getRepository(eventEntityName);
 

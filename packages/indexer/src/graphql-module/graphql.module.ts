@@ -8,7 +8,7 @@ import { entityRegistry } from '../generic-indexer-module/entity-registry';
 
 @Module({})
 export class GraphQLAppModule {
-  static forRoot(): DynamicModule {
+  static forRoot(config?: { disablePlayground?: boolean }): DynamicModule {
     const allEntities = entityRegistry.getAll();
 
     const blockchainEventEntities = allEntities.filter((entity) => {
@@ -30,7 +30,7 @@ export class GraphQLAppModule {
           driver: ApolloDriver,
           autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
           sortSchema: true,
-          playground: true,
+          playground: !config?.disablePlayground,
         }),
         TypeOrmModule.forFeature(blockchainEventEntities),
       ],

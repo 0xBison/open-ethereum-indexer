@@ -1,0 +1,105 @@
+# Working with Entities
+
+The Open Ethereum Indexer leverages [TypeORM](https://github.com/typeorm/typeorm) for database operations, simplifying the process of defining, storing, and querying blockchain data. It is essential to execute ALL SQL queries using TypeORM. This approach ensures that blocks are handled as a single database transaction, ensuring that if any part of the transaction fails, the entire transaction fails, thereby maintaining data integrity. Additionally, it enables the indexer to track changes that need to be reversed in the event of a blockchain reorganization.
+
+## Creating Entities
+
+Entities are TypeScript classes that map to database tables. Here's how to create an entity for storing ERC-20 transfers:
+
+```typescript
+// entities/Transfer.entity.ts
+import { Entity, Column, PrimaryGeneratedColumn, Index } from 'typeorm';
+
+@Entity()
+export class Transfer {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column()
+  from: string;
+
+  @Column()
+  to: string;
+
+  @Column('varchar')
+  value: string;
+
+  @Column('int')
+  blockNumber: number;
+
+  @Column()
+  transactionHash: string;
+
+  @Column('int')
+  logIndex: number;
+
+  @Column('int')
+  timestamp: number;
+}
+```
+
+### Important TypeORM Decorators
+
+- `@Entity()` - Marks a class as a database entity
+- `@Column()` - Defines a column in the table
+- `@PrimaryGeneratedColumn()` - Creates an auto-incrementing primary key
+- `@Index()` - Creates a database index for faster queries
+
+You can also define relations between entities.
+
+Full list in [TypeORM Decorator Reference](https://orkhan.gitbook.io/typeorm/docs/decorator-reference)
+
+## Entity Migrations
+
+When you add or change your entity structure, you'll need to create migrations to update the database schema. You can do this automatically using typeorm by running the `migration:generate` command documented [here](https://orkhan.gitbook.io/typeorm/docs/migrations#generating-migrations).
+
+## Using Entities in Handlers
+
+Here's how to use your entities in event handlers:
+
+```typescript
+import { onEvent } from '@open-ethereum/indexer';
+import { Transfer } from './entities/Transfer.entity';
+
+onEvent('*:Transfer', {
+  onIndex: async (payload: LogEvent, context: LogContext) => {
+    const { log, parsedEvent, block } = payload;
+    const { from, to, value } = parsedEvent.args;
+
+    const { moduleRef, entityManager } = context;
+
+    const transferRepo = entityManager.getRepository(Transfer);
+
+    const transfer = new Transfer();
+    transfer.contractAddress = log.address;
+    transfer.from = from;
+    transfer.to = to;
+    transfer.value = value.toString();
+    transfer.blockNumber = block.number;
+    transfer.transactionHash = log.transactionHash;
+    transfer.logIndex = log.logIndex;
+    transfer.timestamp = block.timestamp;
+
+    await transferRepo.save(transfer);
+  },
+});
+```
+
+## Querying Entities
+
+You can query your entities in your handlers using TypeORM's repository pattern:
+
+```typescript
+const transferRepo = entityManager.getRepository(Transfer);
+
+const transfers = await transferRepo.find({
+  where: [{ from: address }, { to: address }],
+  order: {
+    blockNumber: 'DESC',
+    logIndex: 'DESC',
+  },
+  take: limit,
+});
+```
+
+If you are indexing raw data as is from the chain, you can should use the generic indexing functionality provided by the indexer. You can read more about that on the [generic indexing page](/generic-indexing).

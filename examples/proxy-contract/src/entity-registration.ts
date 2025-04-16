@@ -5,7 +5,7 @@ import * as entities from './output/entities';
 Object.keys(entities).forEach((key) => {
   const entity = entities[key];
   if (entity && typeof entity === 'function') {
-    entityRegistry.register(entity);
+    entityRegistry.registerGeneric(entity);
   } else {
     console.warn(`Skipping invalid entity export: ${key}`);
   }

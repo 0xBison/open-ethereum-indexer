@@ -10,15 +10,16 @@
       "type": "separator"
     },
     "event-listening": "Event Listening",
-    "block-monitoring": "Block Monitoring",
-    "subscriptions": "Subscriptions",
-    "entity-management": "Working with Entities",
+    "block-listening": "Block Listening",
+    "storing-data": "Storing data in the database",
+    "nestjs-event-listeners": "NestJS Event Listeners",
+    "generic-indexing": "Generic Indexing",
     "architecture": {
       "title": "Architecture",
       "type": "separator"
     },
     "configuration": "Configuration",
-    "api-reference": "API Reference",
+    "rest-api": "REST API",
     "graphql": "GraphQL",
     "metrics": "Metrics & Monitoring",
     "examples": {

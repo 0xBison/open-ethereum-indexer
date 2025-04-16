@@ -1,12 +1,8 @@
-# Subscriptions
+# NestJS Event Listeners
 
-Open Ethereum Indexer provides multiple ways to handle blockchain events and blocks. This page explains the different approaches available.
+Although we covered a simple way to listen to events in the previous sections, the recommended way to listen to events is by using NestJS aware subscribers. This allows you to use the full power of the NestJS dependency injection framework. The following examples cover how to use nestjs managed event listeners where you're able to access and inject services into the subscriber. These achieve the same result as the [event listening](/event-listening) and [block listening](/block-listening) pages but with the added benefits of NestJS.
 
-## Class-based Subscribers (Recommended)
-
-The recommended way to create subscribers is by extending the abstract subscriber classes. This approach provides better TypeScript support and cleaner code organization.
-
-### Event Subscribers
+## Event Subscribers
 
 To create an event subscriber, extend the `AbstractEventSubscriber` class:
 
@@ -44,6 +40,8 @@ export class TransferSubscriber extends AbstractEventSubscriber {
   }
 }
 ```
+
+You can see here we've injected the `MyCustomService` service into the subscriber. This service is now available to use within the subscriber. This service must be registered in your app as a [provider](https://docs.nestjs.com/providers).
 
 ### Block Subscribers
 
@@ -85,7 +83,7 @@ export class BlockMetricsSubscriber extends AbstractBlockSubscriber {
 
 ### Registering Subscribers
 
-Register your subscribers in your NestJS module:
+Once you have your subscribers, you can register them in your NestJS module:
 
 ```typescript
 import { Module } from '@nestjs/common';
@@ -107,39 +105,4 @@ import { BlockAnalyticsService } from './block-analytics.service';
 export class AppModule {}
 ```
 
-### Key Benefits of Class-based Subscribers
-
-1. **Type Safety**: Full TypeScript support for event payloads and context
-2. **Dependency Injection**: Clean integration with NestJS DI system
-3. **Code Organization**: Better separation of concerns
-4. **Optional Methods**: Implement only the methods you need
-5. **Automatic Registration**: No need to manually register in `onModuleInit`
-
-## Service-based Subscribers (Legacy)
-
-[Previous documentation about EventManagerService-based subscribers remains unchanged...]
-
-## Static Handlers
-
-[Previous documentation about static handlers remains unchanged...]
-
-## Choosing an Approach
-
-Here's a comparison of the different subscription approaches:
-
-| Feature              | Class-based Subscribers | Service-based Subscribers | Static Handlers             |
-| -------------------- | ----------------------- | ------------------------- | --------------------------- |
-| TypeScript Support   | Full                    | Partial                   | Limited                     |
-| Dependency Injection | Native                  | Native                    | Requires Service Provider   |
-| Code Organization    | Best                    | Good                      | Basic                       |
-| Setup Complexity     | Low                     | Medium                    | Low                         |
-| Use Case             | Most scenarios          | Legacy code               | Simple, standalone handlers |
-| Recommended For      | New development         | Existing implementations  | Basic processing            |
-
-## Best Practices
-
-1. **Use Class-based Subscribers** for new development
-2. **Implement Only Needed Methods** in subscribers (onIndex/onDeindex are optional)
-3. **Keep Subscribers Focused** on specific event types or functionality
-4. **Leverage Dependency Injection** for clean service integration
-5. **Use Meaningful Names** for subscriber classes that reflect their purpose
+Now they behave exactly the same as the [event listeners](/event-listening) and [block listeners](/block-listening) but have full access to the NestJS dependency injection framework.

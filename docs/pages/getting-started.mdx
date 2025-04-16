@@ -1,6 +1,6 @@
 # Getting Started
 
-This guide will help you set up and run your first Open Ethereum Indexer project.
+This guide will help you set up and run your first Open Ethereum Indexer project. It is designed to cover the basics of getting started with the indexer. You should read the full docs for more specific details as this tries to cover each concept quickly and succinctly. It is based on the example projects.
 
 ## Prerequisites
 
@@ -45,12 +45,21 @@ pnpm install @open-ethereum/indexer typeorm
 ```bash
 # .env
 RPC_URL=https://eth-mainnet.g.alchemy.com/v2/your-api-key
+CHAIN_ID=1
+
 SQL_DB=my_indexer
-SQL_USERNAME=postgres
-SQL_PASSWORD=your-password
+SQL_USERNAME=postgres_username
+SQL_PASSWORD=postgres_password
 SQL_HOST=localhost
 SQL_PORT=5432
+SQL_SCHEMA=my_indexer
+
 PORT=3050
+
+SLEEP_INTERVAL=100
+MAX_BLOCKS_PER_QUERY=10
+
+LOG_LEVEL=debug
 ```
 
 Replace the values with your specific configuration.
@@ -84,36 +93,37 @@ import ERC20_ABI from './abis/ERC20.json'; // Optional: import ABIs for your con
 
 export const indexerConfig: IndexerConfig = {
   indexer: {
-    name: 'my-indexer',
-    chains: {
-      mainnet: {
-        rpcUrl:
-          process.env.RPC_URL ||
-          'https://eth-mainnet.g.alchemy.com/v2/your-api-key',
-      },
+    network: {
+      rpcUrl: process.env.NODE_RPC_URL,
+      chainId: parseInt(process.env.NODE_CHAIN_ID),
     },
     contracts: {
       // Optional: define the contracts you want to index
-      USDC: {
-        address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-        startBlock: 6082465, // The block number to start indexing from
-        abi: ERC20_ABI,
+      USDT: {
+        abi: USDTAbi,
+        address: '0xdac17f958d2ee523a2206206994597c13d831ec7',
+        // Optional: Exclude some events you don't care about
+        excludeEvents: [
+          'Issue',
+          'Redeem',
+          'Deprecate',
+          'Params',
+          'DestroyedBlackFunds',
+          'AddedBlackList',
+          'RemovedBlackList',
+          'Approval',
+          'Pause',
+          'Unpause',
+        ],
+        // Optional: specify a range of blocks to index
+        startBlock: 22215331,
+        endBlock: 22215331,
       },
-    },
-    blockMonitor: {
-      sleepInterval: Number(process.env.SLEEP_INTERVAL) || 1000,
-      maxBlocksPerQuery: Number(process.env.MAX_BLOCKS_PER_QUERY) || 10,
     },
   },
   database: {
-    type: 'postgres',
-    host: process.env.SQL_HOST || 'localhost',
-    port: Number(process.env.SQL_PORT) || 5432,
-    username: process.env.SQL_USERNAME || 'postgres',
-    password: process.env.SQL_PASSWORD || 'password',
-    database: process.env.SQL_DB || 'my_indexer',
-    synchronize: true, // Automatically create database schema (use with caution in production)
-    logging: false,
+    // Optional: specify migration scripts for database
+    migrations: [InitialSchema1742552800422],
   },
 };
 ```
@@ -162,7 +172,7 @@ import './subscriptions';
 export class AppModule {}
 ```
 
-In this Module you can also add any custom modules you want to your application. You can look at the [Block Notifier example](/block-notifier) to see how a custom telegram module can be added to the indexer.
+In this Module you can also add any custom modules you want to your application. You can look at the [Block Notifier example](/example-block-notifier) to see how a custom telegram module can be added to the indexer.
 
 ### Main Application
 
@@ -170,6 +180,7 @@ The main file (`src/main.ts`) bootstraps your NestJS application:
 
 ```typescript
 // src/main.ts
+import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { setupSwagger } from '@open-ethereum/indexer';
 import { PrometheusModule } from '@willsoto/nestjs-prometheus';
@@ -225,80 +236,80 @@ pnpm run start:prod
 
 ## Creating Entities
 
-To store blockchain data, you'll want to create TypeORM entities. Here's an example for ERC-20 transfers:
+To store blockchain data, you'll want to create TypeORM entities. Here's a contrived example entity:
 
 ```typescript
-// src/entities/Transfer.entity.ts
-import { Entity, Column, PrimaryGeneratedColumn, Index } from 'typeorm';
+// src/entities/ExampleEntity.ts
+import { Column, Entity, PrimaryColumn } from 'typeorm';
 
-@Entity()
-export class Transfer {
-  @PrimaryGeneratedColumn()
-  id: number;
+@Entity({ name: 'example_entity' })
+export class ExampleEntity {
+  @PrimaryColumn({
+    name: 'id',
+    type: 'uuid',
+    update: false,
+  })
+  public id: string;
 
-  @Column()
-  @Index()
-  contractAddress: string;
+  @Column({
+    name: 'example_column_one',
+    nullable: false,
+    type: 'varchar',
+    update: false,
+  })
+  public exampleColumnOne: string;
 
-  @Column()
-  @Index()
-  from: string;
-
-  @Column()
-  @Index()
-  to: string;
-
-  @Column('varchar')
-  value: string; // Stored as string to preserve precision
-
-  @Column('int')
-  @Index()
-  blockNumber: number;
-
-  @Column()
-  transactionHash: string;
-
-  @Column('int')
-  timestamp: number;
+  @Column({
+    name: 'example_column_two',
+    nullable: false,
+    type: 'numeric',
+    update: false,
+  })
+  public exampleColumnTwo: string;
 }
 ```
 
-Then update your indexer configuration to include the entity:
+You'll need to register the entity with the indexer. Create a file called `src/entity-registration.ts` and add the following:
 
 ```typescript
-// Update indexer.config.ts database options
-import { Transfer } from './entities/Transfer.entity';
+// src/entity-registration.ts
+import { entityRegistry } from '@open-ethereum/indexer';
+import { ExampleEntity } from './output/entities/ExampleEntity';
 
-// ...
-database: {
-  // ...
-  entities: [Transfer],
-  // ...
-}
+export const entities = [ExampleEntity];
+
+// Register all entities from the entities object
+Object.keys(entities).forEach((key) => {
+  const entity = entities[key];
+  if (entity && typeof entity === 'function') {
+    entityRegistry.register(entity);
+  } else {
+    console.warn(`Skipping invalid entity export: ${key}`);
+  }
+});
 ```
 
-And update your subscription to store the data:
+This _**MUST**_ be imported into your `src/main.ts` file.
+
+And update your subscription to store the data. Here, we just hardcode the values for the sake of example but the event data is available in the `payload` object.
 
 ```typescript
 // Update subscriptions.ts
 import { getRepository } from 'typeorm';
 import { Transfer } from './entities/Transfer.entity';
+import { LogContext, LogEvent } from '@open-ethereum/indexer';
 
 onEvent('USDC:Transfer', {
-  onIndex: async (payload) => {
-    const { from, to, value } = payload.parsedEvent.args;
-    const transferRepo = getRepository(Transfer);
+  onIndex: async (payload: LogEvent, context: LogContext) => {
+    const { moduleRef, entityManager } = context;
 
-    const transfer = new Transfer();
-    transfer.contractAddress = payload.log.address;
-    transfer.from = from;
-    transfer.to = to;
-    transfer.value = value.toString();
-    transfer.blockNumber = payload.block.number;
-    transfer.transactionHash = payload.log.transactionHash;
-    transfer.timestamp = payload.block.timestamp;
+    const exampleRepository = entityManager.getRepository(ExampleEntity);
 
-    await transferRepo.save(transfer);
+    const exampleEntity = new ExampleEntity();
+    exampleEntity.id = uuidv4();
+    exampleEntity.exampleColumnOne = 'something';
+    exampleEntity.exampleColumnTwo = '123';
+    await exampleRepository.save(exampleEntity);
   },
 });
 ```
