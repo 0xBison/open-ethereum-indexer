@@ -1,0 +1,53 @@
+# Block Monitoring
+
+The Open Ethereum Indexer provides a robust system for monitoring new blocks on the blockchain. This page explains how to set up block handlers and process blockchain blocks in your application.
+It is similar to [event listening](/event-listening), but triggers for blocks instead of events.
+
+### Registering Block Handlers
+
+You can register block handlers using the `onBlock` function:
+
+```typescript
+import { onBlock } from '@open-ethereum/indexer';
+
+onBlock({
+  onIndex: async (payload) => {
+    // This code runs when a block is indexed
+    console.log('Block indexed:', payload);
+
+    // Access block data
+    const { number, hash, timestamp } = payload;
+    console.log(
+      `Block #${number} with hash ${hash} at ${new Date(timestamp * 1000)}`,
+    );
+
+    // Store block data or trigger other actions
+  },
+  onDeindex: async (payload) => {
+    // This code runs if a block is deindexed (during a chain reorganization)
+    console.log('Block deindexed:', payload);
+
+    // Remove or update stored data as necessary
+  },
+});
+```
+
+### Block Payload
+
+The block handler receives a payload with the following structure:
+
+```typescript
+import { Log } from '@ethersproject/abstract-provider';
+
+export interface BlockEvent {
+  hash: string;
+  number: number;
+  parent: string;
+  timestamp: number;
+  logs: Array<Log>;
+}
+```
+
+## Example: Block Notifier
+
+The [block notifier example](/example-block-notifier) shows how to use block listening to notify every 1,000,000 blocks.

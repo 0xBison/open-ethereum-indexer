@@ -54,6 +54,10 @@ class EntityRegistry {
   isGenericEntity(entityName: string): boolean {
     return this.entities.get(entityName)?.isGeneric ?? false;
   }
+
+  getEntitiesMap(): Map<string, EntityRegistration> {
+    return this.entities;
+  }
 }
 
 // Singleton instance

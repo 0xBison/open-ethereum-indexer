@@ -17,13 +17,13 @@ export interface PaginationQuery {
   orderDirection?: 'ASC' | 'DESC';
 }
 
-export function createGenericEntityController<T extends ObjectLiteral>(
+export function createEntityController<T extends ObjectLiteral>(
   entity: Type<T>,
   entityName: string,
 ): Type<any> {
   @ApiTags(`Events|${entityName}`)
   @Controller(`events/${entityName}`)
-  class GenericEntityController {
+  class EntityController {
     constructor(
       @InjectRepository(entity)
       private readonly repository: Repository<T>,
@@ -49,6 +49,22 @@ export function createGenericEntityController<T extends ObjectLiteral>(
         order: Object.keys(order).length > 0 ? order : undefined,
       });
     }
+  }
+
+  return EntityController;
+}
+
+export function createGenericEntityController<T extends ObjectLiteral>(
+  entity: Type<T>,
+  entityName: string,
+): Type<any> {
+  @ApiTags(`Events|${entityName}`)
+  @Controller(`events/${entityName}`)
+  class GenericEntityController {
+    constructor(
+      @InjectRepository(entity)
+      private readonly repository: Repository<T>,
+    ) {}
 
     @Get(':id')
     async findOne(@Param('id') id: string): Promise<T> {

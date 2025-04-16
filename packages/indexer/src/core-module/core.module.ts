@@ -46,7 +46,7 @@ const metrics = [
   }),
   makeGaugeProvider({
     name: 'latest_indexed_block_timestamp',
-    help: 'the timestamp of the latest indexed block',
+    help: 'the timestamp of the latest indexed block (unix timestamp)',
   }),
   makeCounterProvider({
     name: 'reorgs',
@@ -57,15 +57,9 @@ const metrics = [
     help: 'amount of blocks ran through the indexing flow',
   }),
   makeHistogramProvider({
-    name: 'logs_count_per_block_range',
-    help: 'amount of logs per block range',
-    labelNames: ['block_range'],
-    buckets: client.linearBuckets(0, 10, 40),
-  }),
-  makeHistogramProvider({
     name: 'logs_count_per_block',
     help: 'amount of logs per block',
-    buckets: client.linearBuckets(0, 2, 25),
+    buckets: client.exponentialBuckets(1, 2, 10),
   }),
   makeHistogramProvider({
     name: 'block_process_iteration_duration',

@@ -42,6 +42,8 @@ async function bootstrap() {
 bootstrap();
 ```
 
+You will also need to use the `disableMetrics` option in your configuration to disable the metrics on the main app (see below).
+
 ## Configuring Metrics
 
 ### Disabling Metrics
@@ -208,3 +210,33 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:3066']
 ```
+
+### Pre-built Dashboards
+
+The indexer comes with two pre-built Grafana dashboards that you can import:
+
+#### Indexer Dashboard
+
+![Indexer Dashboard](images/indexer_dashboard.png)
+
+The Indexer dashboard provides key metrics about your indexer's performance:
+
+- Current block and latest indexed block status
+- Blocks behind (lag indicator)
+- Block indexing rate
+- Reorg detection
+- Log distribution per block
+- Block processing time distribution
+
+#### Node.js Dashboard
+
+![Node.js Dashboard](images/nodejs_dashboard.png)
+
+The Node.js dashboard monitors the health of your indexer process:
+
+- Memory usage and garbage collection
+- Event loop lag
+- CPU usage
+- Active handles and requests
+
+You can find the JSON configurations for these dashboards in the repository and import them directly into your Grafana instance. If you're using the docker image, the dashboards will already be configured.
