@@ -5,6 +5,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { join } from 'path';
 import { createGenericEntityResolver } from './generic-entity.resolver.factory';
 import { entityRegistry } from '../generic-indexer-module/entity-registry';
+import { BlockIndex } from '../database-module/core/BlockIndex.entity';
+import { BlockIndexResolver } from './block.resolver';
 
 @Module({})
 export class GraphQLAppModule {
@@ -32,9 +34,9 @@ export class GraphQLAppModule {
           sortSchema: true,
           playground: true,
         }),
-        TypeOrmModule.forFeature(blockchainEventEntities),
+        TypeOrmModule.forFeature([...blockchainEventEntities, BlockIndex]),
       ],
-      providers: resolvers,
+      providers: [...resolvers, BlockIndexResolver],
       exports: [GraphQLModule],
     };
   }
