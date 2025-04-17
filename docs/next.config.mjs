@@ -4,10 +4,8 @@ const withNextraConfig = withNextra({
   theme: 'nextra-theme-docs',
   themeConfig: './theme.config.jsx',
   defaultShowCopyCode: true,
-  flexsearch: {
-    codeblocks: true,
-  },
   staticImage: true,
+  search: false,
 });
 
 export default withNextraConfig({

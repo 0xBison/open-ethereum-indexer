@@ -6,7 +6,8 @@
     "dev": "next dev -p 3410",
     "build": "next build",
     "start": "next start -p 3410",
-    "lint": "next lint"
+    "lint": "next lint",
+    "prod": "pm2 start npm --name 'ethereum-indexer-docs' -- start"
   },
   "dependencies": {
     "@mdx-js/react": "^3.1.0",
@@ -14,7 +15,8 @@
     "nextra": "2.13.2",
     "nextra-theme-docs": "2.13.2",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "pm2": "^5.3.1"
   },
   "devDependencies": {
     "@types/node": "^20.11.19",
