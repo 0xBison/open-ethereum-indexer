@@ -36,7 +36,7 @@ nest new my-indexer
 pnpm install @open-ethereum/indexer typeorm
 ```
 
-5.
+5. Follow the sections below which will explain each file and what it should contain.
 
 ### Setting up the Environment
 
@@ -102,7 +102,7 @@ export const indexerConfig: IndexerConfig = {
       USDT: {
         abi: USDTAbi,
         address: '0xdac17f958d2ee523a2206206994597c13d831ec7',
-        // Optional: Exclude some events you don't care about
+        // Optional: Exclude some events you don't care about - we'll keep just Transfer events
         excludeEvents: [
           'Issue',
           'Redeem',
@@ -117,7 +117,6 @@ export const indexerConfig: IndexerConfig = {
         ],
         // Optional: specify a range of blocks to index
         startBlock: 22215331,
-        endBlock: 22215331,
       },
     },
   },
@@ -128,6 +127,8 @@ export const indexerConfig: IndexerConfig = {
 };
 ```
 
+You can get the USDT abi from [etherscan](https://etherscan.io/token/0xdac17f958d2ee523a2206206994597c13d831ec7#code) or here [USDT.json](https://github.com/0xBison/open-ethereum-indexer/blob/main/examples/basic-example/src/abis/USDT.json).
+
 ### Subscriptions
 
 The subscriptions file (`src/subscriptions.ts`) defines handlers for blockchain events and blocks:
@@ -136,11 +137,11 @@ The subscriptions file (`src/subscriptions.ts`) defines handlers for blockchain 
 // src/subscriptions.ts
 import { onEvent, onBlock } from '@open-ethereum/indexer';
 
-// Listen for USDC Transfer events
-onEvent('USDC:Transfer', {
+// Listen for USDT Transfer events
+onEvent('USDT:Transfer', {
   onIndex: async (payload) => {
     const { from, to, value } = payload.parsedEvent.args;
-    console.log(`USDC Transfer: ${from} -> ${to}: ${value.toString()}`);
+    console.log(`USDT Transfer: ${from} -> ${to}: ${value.toString()}`);
     // Here you would typically store this data in the database
   },
 });

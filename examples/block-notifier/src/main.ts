@@ -1,3 +1,5 @@
+import 'dotenv/config';
+
 import { NestFactory } from '@nestjs/core';
 import { setupSwagger } from '@open-ethereum/indexer';
 import './subscriptions';

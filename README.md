@@ -25,81 +25,208 @@ Open Ethereum Indexer is designed to simplify the process of indexing and queryi
 
 ## Prerequisites
 
-- Node.js (v20+)
-- PostgreSQL
-- Access to an Ethereum node (via RPC URL)
+Before you begin, ensure you have the following installed:
 
-## Installation
+- **Node.js** (v20+)
+- **PostgreSQL** (using Docker is recommended)
+- **Access to an Ethereum node** via RPC URL (e.g., from Alchemy, or your own node)
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/open-ethereum-indexer.git
-   cd open-ethereum-indexer
-   ```
+## Getting Started
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+### Creating a New Project
 
-3. Configure environment variables:
-   ```bash
-   cp .env.example .env
-   ```
-   Edit the `.env` file with your specific configuration.
+The easiest way to get started is to use the NestJS CLI:
 
-## Configuration
-
-The following environment variables can be configured:
-
+1. Install the NestJS CLI:
 ```bash
-PORT=3033                  # API server port
-METRICS_PORT=3066          # Prometheus metrics port
-
-# Database config
-SQL_DB="db_name"           # PostgreSQL database name
-SQL_USERNAME="db_username" # Database username
-SQL_PASSWORD="db_password" # Database password
-SQL_HOST="localhost"       # Database host
-SQL_PORT=5432              # Database port
-SQL_SCHEMA="db_schema"     # Database schema
-
-# Block monitor config
-SLEEP_INTERVAL=1000        # Interval between block checks (ms)
-MAX_BLOCKS_PER_QUERY=10    # Maximum blocks to process in one query
+pnpm install -g @nestjs/cli
 ```
 
-## Usage
-
-### Starting the Service
-
+2. Create a new project:
 ```bash
-# Development mode
-npm run start:dev
-
-# Production mode
-npm run build
-npm run start:prod
+nest new my-indexer
 ```
 
-### Indexing Events
+3. Install the Open Ethereum Indexer package and typeorm:
+```bash
+pnpm install @open-ethereum/indexer typeorm
+```
 
-The indexer can be configured to monitor specific smart contract events. Example configuration in `app.module.ts`:
+### Basic Configuration
+
+Create your indexer configuration (`src/indexer.config.ts`):
 
 ```typescript
-// Register event handlers
-onEvent('*:*', {
-  onIndex: async (payload) => {
-    console.log('ON EVENT');
-    // Process event data
-  },
-});
+import { IndexerConfig } from '@open-ethereum/indexer';
+import ERC20_ABI from './abis/ERC20.json';
 
-// Register block handlers
-onBlock({
-  onIndex: async (payload) => {
-    console.log('ON BLOCK');
-    // Process block data
+export const indexerConfig: IndexerConfig = {
+  indexer: {
+    network: {
+      rpcUrl: process.env.NODE_RPC_URL,
+      chainId: parseInt(process.env.CHAIN_ID),
+    },
+    contracts: {
+      USDT: {
+        abi: ERC20_ABI,
+        address: '0xdac17f958d2ee523a2206206994597c13d831ec7',
+        startBlock: 22215331,
+      },
+    },
+  },
+  database: {
+    migrations: [],
+  },
+};
+```
+
+### Working with Entities
+
+There are two approaches to working with entities:
+
+#### 1. Manual Entity Definition
+
+Create and register your entities manually:
+
+```typescript
+// entities/Transfer.entity.ts
+import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+
+@Entity()
+export class Transfer {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column()
+  from: string;
+
+  @Column()
+  to: string;
+
+  @Column('varchar')
+  value: string;
+
+  @Column('int')
+  blockNumber: number;
+}
+```
+
+Register your entities (`src/entity-registration.ts`):
+```typescript
+import { entityRegistry } from '@open-ethereum/indexer';
+import { Transfer } from './entities/Transfer.entity';
+
+export const entities = [Transfer];
+
+// Register all entities
+Object.keys(entities).forEach((key) => {
+  const entity = entities[key];
+  if (entity && typeof entity === 'function') {
+    entityRegistry.register(entity);
+  }
+});
+```
+
+This MUST be imported into your `src/main.ts` file.
+
+#### 2. Automatic Entity Generation
+
+For simpler use cases, you can automatically generate entities from contract ABIs using the [solidity-events-to-typeorm](https://github.com/0xBison/solidity-events-to-typeorm) utility:
+
+1. Install the utility:
+```bash
+pnpm install -D solidity-events-to-typeorm
+```
+
+2. Create a generation script (`scripts/generate.ts`):
+```typescript
+import { Config, generate } from 'solidity-events-to-typeorm';
+import * as path from 'path';
+import ContractABI from '../src/abi/contract.json';
+
+const outputPath = path.resolve(__dirname, '../src/output/');
+
+export const config: Config = {
+  output: {
+    path: outputPath,
+    entities: path.resolve(outputPath, './entities/'),
+    abis: path.resolve(outputPath, './abi/'),
+  },
+  migrations: {
+    path: path.resolve(outputPath, './migrations/'),
+    migrationName: 'InitialSchema',
+    schemaName: 'SQL_SCHEMA',
+    schemaVariable: true,
+  },
+  contracts: {
+    YourContract: {
+      abi: ContractABI,
+    },
+  },
+};
+
+generate(config);
+```
+
+3. Update your indexer config to use the generated entities:
+```typescript
+import { IndexerConfig } from '@open-ethereum/indexer';
+import { InitialSchema } from './output/migrations/InitialSchema';
+
+export const indexerConfig: IndexerConfig = {
+  // ... network config ...
+  database: {
+    migrations: [InitialSchema],
+  },
+};
+```
+
+With this approach, you don't need to write event handlers - events are automatically indexed as they appear on-chain!
+
+### Event Handlers (For Manual Entities)
+
+If using manual entities, create event handlers to process blockchain events:
+
+```typescript
+import { onEvent } from '@open-ethereum/indexer';
+import { Transfer } from './entities/Transfer.entity';
+
+onEvent('USDT:Transfer', {
+  onIndex: async (payload, context) => {
+    const { from, to, value } = payload.parsedEvent.args;
+
+    const { moduleRef, entityManager } = context;
+
+    const transferRepo = entityManager.getRepository(Transfer);
+
+    const transfer = new Transfer();
+    transfer.from = from;
+    transfer.to = to;
+    transfer.value = value.toString();
+    transfer.blockNumber = payload.block.number;
+
+    await transferRepo.save(transfer);
   },
 });
 ```
+
+## Documentation
+
+For comprehensive documentation, including:
+- Detailed setup instructions
+- Advanced configuration options
+- Complete API reference
+- Examples and use cases
+- Best practices for entity management
+- Event handling patterns
+- Generic indexing features
+
+Please visit the documentation at [https://openethereumindexer.com/](https://openethereumindexer.com/) and check out the [examples](https://github.com/0xBison/open-ethereum-indexer/tree/main/examples)
+
+## Contributing
+
+We welcome contributions! Please see our [Contributing Guide](https://openethereumindexer.com/contributing) for details.
+
+## License
+
+MIT
