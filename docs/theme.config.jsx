@@ -3,9 +3,9 @@ import React from 'react'
 export default {
   logo: <span>Open Ethereum Indexer</span>,
   project: {
-    link: 'https://github.com/0xBison/open-ethereum-indexer-new'
+    link: 'https://github.com/0xBison/open-ethereum-indexer'
   },
-  docsRepositoryBase: 'https://github.com/0xBison/open-ethereum-indexer-new/tree/main/docs',
+  docsRepositoryBase: 'https://github.com/0xBison/open-ethereum-indexer/tree/main/docs',
   useNextSeoProps() {
     return {
       titleTemplate: '%s – Open Ethereum Indexer'
